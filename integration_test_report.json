@@ -1,0 +1,70 @@
+{
+  "test_summary": {
+    "total_tests": 6,
+    "passed_tests": 5,
+    "failed_tests": 1,
+    "success_rate": 83.33333333333334
+  },
+  "performance_metrics": [
+    {
+      "operation_name": "Enhanced Scene Chunking",
+      "execution_time_ms": 27.950286865234375,
+      "memory_usage_mb": 0.0,
+      "tokens_processed": 200,
+      "chunks_created": 1,
+      "quality_score": 0.7,
+      "success": false,
+      "error_message": null
+    },
+    {
+      "operation_name": "Advanced Context Building",
+      "execution_time_ms": 33.82420539855957,
+      "memory_usage_mb": 0.0,
+      "tokens_processed": 904,
+      "chunks_created": 2,
+      "quality_score": 0.7916666666666667,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "operation_name": "End-to-End Pipeline",
+      "execution_time_ms": 9.571552276611328,
+      "memory_usage_mb": 0.0,
+      "tokens_processed": 382,
+      "chunks_created": 1,
+      "quality_score": 0.7583333333333333,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "operation_name": "Performance Benchmarks",
+      "execution_time_ms": 27.21637487411499,
+      "memory_usage_mb": 0.0,
+      "tokens_processed": 91090,
+      "chunks_created": 4,
+      "quality_score": 1.0,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "operation_name": "Memory Usage Analysis",
+      "execution_time_ms": 0.0,
+      "memory_usage_mb": 0.0,
+      "tokens_processed": 0,
+      "chunks_created": 0,
+      "quality_score": 1.0,
+      "success": true,
+      "error_message": "psutil not available"
+    },
+    {
+      "operation_name": "Scalability Testing",
+      "execution_time_ms": 116.75834655761719,
+      "memory_usage_mb": 0.0,
+      "tokens_processed": 3250.0,
+      "chunks_created": 5,
+      "quality_score": 1.0,
+      "success": true,
+      "error_message": null
+    }
+  ]
+}

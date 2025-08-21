@@ -1,0 +1,178 @@
+{
+  "query": "Generate a climactic scene where Emma confronts the truth about her family's legacy",
+  "context_type": "emotional_scene",
+  "total_tokens": 390,
+  "context_quality_score": 0.8416666666666667,
+  "characters_involved": [
+    "Emma"
+  ],
+  "locations_involved": [
+    "Victorian mansion"
+  ],
+  "emotional_tone": "dramatic",
+  "chunks": [
+    {
+      "chunk_id": "chunk_4",
+      "content": "Emma's phone buzzed. A text from an unknown number: \"Stop looking for the box. Some secrets are meant to stay buried.\" Her blood ran cold. How did they know? She hadn't told anyone about her search except...\n\nShe thought about Detective Chen. Could she trust him? Or was someone watching her every move?",
+      "score": 0.91,
+      "metadata": {
+        "scene_type": "conflict",
+        "characters": [
+          "Emma",
+          "Detective Chen"
+        ],
+        "locations": [],
+        "emotional_tone": "fear",
+        "tension_level": 0.9,
+        "importance_score": 0.95,
+        "dialogue_ratio": 0.2,
+        "action_ratio": 0.3,
+        "description_ratio": 0.1,
+        "content_types": [
+          "narrative",
+          "internal_monologue",
+          "action"
+        ]
+      },
+      "document_title": "The Hartwell Mystery"
+    },
+    {
+      "chunk_id": "chunk_1",
+      "content": "Emma stood in the doorway of her grandfather's study, her heart racing. The letter in her hands felt heavier than it should, as if the words themselves carried the weight of generations. \"The Hartwell Legacy,\" she whispered, reading the heading for the third time.",
+      "score": 0.95,
+      "metadata": {
+        "scene_type": "emotional_beat",
+        "characters": [
+          "Emma",
+          "grandfather"
+        ],
+        "locations": [
+          "study"
+        ],
+        "emotional_tone": "anxiety",
+        "tension_level": 0.7,
+        "importance_score": 0.9,
+        "dialogue_ratio": 0.1,
+        "action_ratio": 0.2,
+        "description_ratio": 0.3,
+        "content_types": [
+          "narrative",
+          "internal_monologue"
+        ]
+      },
+      "document_title": "The Hartwell Mystery"
+    },
+    {
+      "chunk_id": "chunk_5",
+      "content": "The explosion shattered the night silence. Emma dove behind the stone fountain as debris rained down around her. Through the smoke, she could see dark figures advancing across the courtyard.\n\n\"There!\" one of them shouted. \"She's by the fountain!\"\n\nEmma's heart pounded. She had to reach the main house, but they were between her and safety.",
+      "score": 0.87,
+      "metadata": {
+        "scene_type": "action_sequence",
+        "characters": [
+          "Emma"
+        ],
+        "locations": [
+          "courtyard",
+          "fountain",
+          "main house"
+        ],
+        "emotional_tone": "fear",
+        "tension_level": 0.95,
+        "importance_score": 0.9,
+        "dialogue_ratio": 0.2,
+        "action_ratio": 0.8,
+        "description_ratio": 0.2,
+        "content_types": [
+          "action",
+          "dialogue"
+        ]
+      },
+      "document_title": "The Hartwell Mystery"
+    },
+    {
+      "chunk_id": "chunk_4",
+      "content": "Emma's phone buzzed. A text from an unknown number: \"Stop looking for the box. Some secrets are meant to stay buried.\" Her blood ran cold. How did they know? She hadn't told anyone about her search except...\n\nShe thought about Detective Chen. Could she trust him? Or was someone watching her every move?",
+      "score": 0.91,
+      "metadata": {
+        "scene_type": "conflict",
+        "characters": [
+          "Emma",
+          "Detective Chen"
+        ],
+        "locations": [],
+        "emotional_tone": "fear",
+        "tension_level": 0.9,
+        "importance_score": 0.95,
+        "dialogue_ratio": 0.2,
+        "action_ratio": 0.3,
+        "description_ratio": 0.1,
+        "content_types": [
+          "narrative",
+          "internal_monologue",
+          "action"
+        ]
+      },
+      "document_title": "The Hartwell Mystery"
+    },
+    {
+      "chunk_id": "chunk_1",
+      "content": "Emma stood in the doorway of her grandfather's study, her heart racing. The letter in her hands felt heavier than it should, as if the words themselves carried the weight of generations. \"The Hartwell Legacy,\" she whispered, reading the heading for the third time.",
+      "score": 0.95,
+      "metadata": {
+        "scene_type": "emotional_beat",
+        "characters": [
+          "Emma",
+          "grandfather"
+        ],
+        "locations": [
+          "study"
+        ],
+        "emotional_tone": "anxiety",
+        "tension_level": 0.7,
+        "importance_score": 0.9,
+        "dialogue_ratio": 0.1,
+        "action_ratio": 0.2,
+        "description_ratio": 0.3,
+        "content_types": [
+          "narrative",
+          "internal_monologue"
+        ]
+      },
+      "document_title": "The Hartwell Mystery"
+    },
+    {
+      "chunk_id": "chunk_3",
+      "content": "The Victorian mansion loomed against the storm clouds, its Gothic spires piercing the gray sky like ancient fingers reaching toward heaven. Ivy crawled up the weathered stone walls, and the windows seemed to watch with dark, knowing eyes. This was the Hartwell estate, keeper of secrets for over two centuries.",
+      "score": 0.82,
+      "metadata": {
+        "scene_type": "opening",
+        "characters": [],
+        "locations": [
+          "Victorian mansion",
+          "Hartwell estate"
+        ],
+        "emotional_tone": "mysterious",
+        "tension_level": 0.4,
+        "importance_score": 0.7,
+        "dialogue_ratio": 0.0,
+        "action_ratio": 0.0,
+        "description_ratio": 0.9,
+        "content_types": [
+          "description",
+          "world_building"
+        ]
+      },
+      "document_title": "The Hartwell Mystery"
+    }
+  ],
+  "graph_facts": [
+    {
+      "fact": "Emma Hartwell is the granddaughter of Professor Edmund Hartwell",
+      "uuid": "fact_1"
+    },
+    {
+      "fact": "The Victorian mansion has secret passages built in the 1800s",
+      "uuid": "fact_5"
+    }
+  ]
+}

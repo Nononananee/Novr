@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-08-21T21:13:02.434007",
+  "system_health": {
+    "status": "healthy",
+    "uptime_seconds": 11.269833326339722,
+    "total_operations": 3,
+    "success_rate": 1.0,
+    "avg_response_time_ms": 25.074005126953125,
+    "memory_usage_mb": 0.0,
+    "error_count": 0,
+    "last_error": null
+  },
+  "recent_metrics": [
+    {
+      "timestamp": "2025-08-21T21:12:52.289483",
+      "operation_type": "Enhanced Chunking",
+      "execution_time_ms": 41.31150245666504,
+      "success": true
+    },
+    {
+      "timestamp": "2025-08-21T21:12:52.318420",
+      "operation_type": "Advanced Context Building",
+      "execution_time_ms": 24.12581443786621,
+      "success": true
+    },
+    {
+      "timestamp": "2025-08-21T21:12:52.331638",
+      "operation_type": "Concurrent Operations",
+      "execution_time_ms": 9.784698486328125,
+      "success": true
+    }
+  ]
+}

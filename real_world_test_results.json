@@ -1,0 +1,261 @@
+[
+  {
+    "test_name": "Complex Dialogue",
+    "processing_time_ms": 184.21649932861328,
+    "chunks_created": 1,
+    "context_quality": 1.0208333333333335,
+    "expectations_met": 1,
+    "total_expectations": 3,
+    "success_rate": 0.3333333333333333,
+    "analysis": {
+      "scene_type": {
+        "met": false,
+        "expected": "dialogue_scene",
+        "actual": [
+          "character_introduction"
+        ]
+      },
+      "characters": {
+        "met": true,
+        "expected": [
+          "Officer Martinez",
+          "Emma",
+          "Detective Chen",
+          "Sarah"
+        ],
+        "actual": [
+          "Someone",
+          "Maps",
+          "Hartwell Collection",
+          "Officer Martinez",
+          "Emma",
+          "Sarah Mitchell",
+          "Your",
+          "Things",
+          "Heart",
+          "Killed",
+          "Would",
+          "Ancient",
+          "Detective Chen",
+          "Sarah",
+          "She",
+          "Chen",
+          "He",
+          "My",
+          "Because",
+          "Innocent",
+          "Martinez"
+        ]
+      },
+      "dialogue_ratio": {
+        "met": false,
+        "expected": 0.7,
+        "actual": 0.02144082332761578
+      }
+    },
+    "context_analysis": {
+      "quality_score": 1.0208333333333335,
+      "total_tokens": 383,
+      "characters_found": 4,
+      "locations_found": 0,
+      "graph_facts": 2
+    }
+  },
+  {
+    "test_name": "Action Sequence",
+    "processing_time_ms": 80.40642738342285,
+    "chunks_created": 1,
+    "context_quality": 0.9178571428571428,
+    "expectations_met": 1,
+    "total_expectations": 3,
+    "success_rate": 0.3333333333333333,
+    "analysis": {
+      "scene_type": {
+        "met": false,
+        "expected": "action_sequence",
+        "actual": [
+          "opening"
+        ]
+      },
+      "characters": {
+        "met": true,
+        "expected": [
+          "Emma",
+          "Marcus"
+        ],
+        "actual": [
+          "Moving",
+          "Ancient",
+          "Target",
+          "Cut",
+          "Don",
+          "Emma",
+          "Egyptian",
+          "Check",
+          "Behind",
+          "It",
+          "If",
+          "Flashlight",
+          "Somewhere",
+          "Freedom",
+          "Lock",
+          "She",
+          "They",
+          "Marcus"
+        ]
+      },
+      "action_ratio": {
+        "met": false,
+        "expected": 0.8,
+        "actual": 0.009523809523809525
+      }
+    },
+    "context_analysis": {
+      "quality_score": 0.9178571428571428,
+      "total_tokens": 453,
+      "characters_found": 2,
+      "locations_found": 4,
+      "graph_facts": 2
+    }
+  },
+  {
+    "test_name": "Character Development",
+    "processing_time_ms": 496.823787689209,
+    "chunks_created": 1,
+    "context_quality": 0.925,
+    "expectations_met": 2,
+    "total_expectations": 3,
+    "success_rate": 0.6666666666666666,
+    "analysis": {
+      "scene_type": {
+        "met": false,
+        "expected": "emotional_beat",
+        "actual": [
+          "conflict"
+        ]
+      },
+      "characters": {
+        "met": true,
+        "expected": [
+          "Emma",
+          "grandfather"
+        ],
+        "actual": [
+          "Her",
+          "Egypt",
+          "His",
+          "Hartwell",
+          "Emma",
+          "Their",
+          "Trust",
+          "It",
+          "Sarah",
+          "If",
+          "Would Sarah",
+          "He",
+          "As",
+          "Hartwells",
+          "She",
+          "Whatever",
+          "The Hartwell",
+          "Inside"
+        ]
+      },
+      "importance_score": {
+        "met": true,
+        "expected": 0.9,
+        "actual": 1.0
+      }
+    },
+    "context_analysis": {
+      "quality_score": 0.925,
+      "total_tokens": 315,
+      "characters_found": 2,
+      "locations_found": 0,
+      "graph_facts": 1
+    }
+  },
+  {
+    "test_name": "World Building",
+    "processing_time_ms": 83.3277702331543,
+    "chunks_created": 1,
+    "context_quality": 0.65,
+    "expectations_met": 1,
+    "total_expectations": 1,
+    "success_rate": 1.0,
+    "analysis": {
+      "scene_type": {
+        "met": true,
+        "expected": "opening",
+        "actual": [
+          "opening"
+        ]
+      }
+    },
+    "context_analysis": {
+      "quality_score": 0.65,
+      "total_tokens": 312,
+      "characters_found": 0,
+      "locations_found": 4,
+      "graph_facts": 0
+    }
+  },
+  {
+    "test_name": "Mixed Content",
+    "processing_time_ms": 218.16229820251465,
+    "chunks_created": 1,
+    "context_quality": 1.0178571428571428,
+    "expectations_met": 1,
+    "total_expectations": 1,
+    "success_rate": 1.0,
+    "analysis": {
+      "characters": {
+        "met": true,
+        "expected": [
+          "Emma",
+          "Detective Chen",
+          "Viktor Kozlov"
+        ],
+        "actual": [
+          "Just",
+          "Dust",
+          "Hartwell Collection",
+          "Chronos Codex",
+          "Archaeologists",
+          "Hello",
+          "Viktor Kozlov",
+          "Sumerian",
+          "Now",
+          "Codex",
+          "We",
+          "Emma",
+          "Your",
+          "As",
+          "Which",
+          "They",
+          "Killed",
+          "Egyptian",
+          "You",
+          "Are",
+          "Incredible",
+          "Detective Chen",
+          "Chen",
+          "Too",
+          "Tonight",
+          "In",
+          "Whatever",
+          "My",
+          "Hartwell",
+          "She"
+        ]
+      }
+    },
+    "context_analysis": {
+      "quality_score": 1.0178571428571428,
+      "total_tokens": 438,
+      "characters_found": 3,
+      "locations_found": 2,
+      "graph_facts": 2
+    }
+  }
+]
