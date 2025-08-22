@@ -3,12 +3,17 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 import asyncio
 import json
+import logging
 from datetime import datetime, timedelta
 
 from .memory_manager import NovelMemoryManager, MemoryChunk, MemoryType, MemoryPriority
-from ..data.chunker import NovelChunker, ChunkingStrategy
-from ..novel.coherence.consistency_enforcer import LongTermConsistencyManager
-from ..novel.character_management.repository import CharacterRepository
+from .emotional_memory_system import EmotionalMemorySystem, EmotionalState, EmotionalArc
+from .chunking_strategies import NovelChunker, ChunkingStrategy
+from .consistency_manager import LongTermConsistencyManager
+from novel.structure.narrative_structure_manager import NarrativeStructureManager, NarrativeStructure
+from novel.style.style_consistency_manager import StyleConsistencyManager, WritingStyle
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class GenerationContext:
@@ -22,6 +27,17 @@ class GenerationContext:
     constraints: Optional[Any] = None
     pov_character: Optional[str] = None
     scene_location: Optional[str] = None
+    # Emotional context
+    character_emotional_states: Optional[Dict[str, EmotionalState]] = None
+    emotional_arc_requirements: Optional[List[str]] = None
+    target_emotional_tone: Optional[str] = None
+    # Narrative structure context
+    narrative_structure: Optional[NarrativeStructure] = None
+    expected_structure_stage: Optional[str] = None
+    total_expected_words: Optional[int] = None
+    # Style context
+    target_writing_style: Optional[WritingStyle] = None
+    style_consistency_required: bool = True
 
 @dataclass
 class GenerationResult:
@@ -33,6 +49,16 @@ class GenerationResult:
     generation_metadata: Dict[str, Any]
     quality_score: float = 0.0
     originality_score: float = 0.0
+    # Emotional analysis results
+    emotional_states_detected: Optional[List[EmotionalState]] = None
+    emotional_consistency_score: float = 0.0
+    emotional_arc_progression: Optional[Dict[str, Any]] = None
+    # Structure analysis results
+    structure_validation_result: Optional[Dict[str, Any]] = None
+    structure_adherence_score: float = 0.0
+    # Style analysis results
+    style_analysis_result: Optional[Dict[str, Any]] = None
+    style_consistency_score: float = 0.0
 
 class IntegratedNovelMemorySystem:
     """Integrated system combining memory management, chunking, and consistency"""
@@ -41,6 +67,7 @@ class IntegratedNovelMemorySystem:
                  vectorstore_client=None,
                  llm_client=None,
                  character_repo=None,
+                 db_utils=None,
                  max_memory_tokens: int = 32000,
                  consistency_level: str = "high"):
         
@@ -54,11 +81,19 @@ class IntegratedNovelMemorySystem:
             memory_manager=self.memory_manager,
             character_repo=character_repo
         )
+        # Add emotional memory system
+        self.emotional_memory = EmotionalMemorySystem(db_utils=db_utils)
+        
+        # Add narrative structure management
+        self.structure_manager = NarrativeStructureManager(db_utils=db_utils)
+        
+        # Add style consistency management
+        self.style_manager = StyleConsistencyManager(db_utils=db_utils)
         
         # Clients
         self.vectorstore = vectorstore_client
         self.llm_client = llm_client
-        self.character_repo = character_repo
+        self.character_repo = character_repo  # Optional character repository
         
         # Configuration
         self.consistency_level = consistency_level
@@ -69,7 +104,14 @@ class IntegratedNovelMemorySystem:
             'total_generations': 0,
             'consistency_issues_found': 0,
             'memory_chunks_created': 0,
-            'average_context_size': 0
+            'average_context_size': 0,
+            'emotional_states_analyzed': 0,
+            'emotional_arcs_updated': 0,
+            'average_emotional_consistency': 0.0,
+            'structure_validations_performed': 0,
+            'average_structure_adherence': 0.0,
+            'style_analyses_performed': 0,
+            'average_style_consistency': 0.0
         }
 
     async def generate_with_full_context(self, 
@@ -110,7 +152,98 @@ class IntegratedNovelMemorySystem:
                 context=memory_context
             )
             
-            # Step 5: Fix consistency issues if possible
+            # Step 5: Analyze emotional content
+            emotional_states = []
+            emotional_consistency_score = 0.0
+            emotional_arc_progression = {}
+            
+            try:
+                if generation_context.target_characters:
+                    emotional_states = await self.emotional_memory.analyze_emotional_content(
+                        content=generated_content,
+                        characters=generation_context.target_characters,
+                        chunk_id=None,  # Will be set when chunk is created
+                        method="keyword_analysis"
+                    )
+                    
+                    # Calculate emotional consistency
+                    emotional_consistency_score = await self._calculate_emotional_consistency(
+                        emotional_states, generation_context
+                    )
+                    
+                    # Track emotional arc progression
+                    emotional_arc_progression = await self._track_emotional_arc_progression(
+                        emotional_states, generation_context
+                    )
+                    
+                    # Update statistics
+                    self.stats['emotional_states_analyzed'] += len(emotional_states)
+                    
+            except Exception as e:
+                logger.warning(f"Emotional analysis failed: {e}")
+            
+            # Step 6: Validate narrative structure
+            structure_validation_result = None
+            structure_adherence_score = 0.0
+            
+            try:
+                if generation_context.narrative_structure and generation_context.total_expected_words:
+                    # Set active structure if not already set
+                    if self.structure_manager.active_structure is None:
+                        self.structure_manager.set_active_structure(generation_context.narrative_structure)
+                    
+                    # Validate structure adherence
+                    structure_validation = self.structure_manager.validate_structure_adherence(
+                        current_chapter=generation_context.current_chapter,
+                        current_word_count=generation_context.current_word_count,
+                        total_expected_words=generation_context.total_expected_words,
+                        plot_threads=generation_context.active_plot_threads,
+                        character_arcs={}  # Could be extracted from character_repo
+                    )
+                    
+                    structure_validation_result = {
+                        'is_valid': structure_validation.is_valid,
+                        'current_stage': structure_validation.current_stage.value,
+                        'expected_stage': structure_validation.expected_stage.value,
+                        'position_accuracy': structure_validation.position_accuracy,
+                        'structural_issues': structure_validation.structural_issues,
+                        'recommendations': structure_validation.recommendations
+                    }
+                    
+                    structure_adherence_score = structure_validation.confidence_score
+                    self.stats['structure_validations_performed'] += 1
+                    
+            except Exception as e:
+                logger.warning(f"Structure validation failed: {e}")
+            
+            # Step 7: Analyze style consistency
+            style_analysis_result = None
+            style_consistency_score = 0.0
+            
+            try:
+                if generation_context.style_consistency_required:
+                    # Set active style guide if specified
+                    if generation_context.target_writing_style:
+                        self.style_manager.set_active_style_guide(generation_context.target_writing_style)
+                    
+                    # Analyze style consistency
+                    style_analysis = self.style_manager.validate_style_consistency(generated_content)
+                    
+                    style_analysis_result = {
+                        'consistency_score': style_analysis.consistency_score,
+                        'style_deviations': style_analysis.style_deviations,
+                        'recommendations': style_analysis.recommendations,
+                        'confidence': style_analysis.confidence,
+                        'analyzed_word_count': style_analysis.analyzed_word_count
+                    }
+                    
+                    style_consistency_score = style_analysis.consistency_score
+                    self.stats['style_analyses_performed'] += 1
+                    
+            except Exception as e:
+                logger.warning(f"Style analysis failed: {e}")
+            
+            # Step 8: Fix consistency issues if possible
             if not content_valid:
                 generated_content, remaining_issues = await self.consistency_manager.fix_consistency_issues(
                     content=generated_content,
@@ -119,17 +252,22 @@ class IntegratedNovelMemorySystem:
             else:
                 remaining_issues = post_issues
             
-            # Step 6: Process new content into memory chunks
+            # Step 9: Process new content into memory chunks
             new_chunks = await self._process_new_content_into_memory(
                 content=generated_content,
                 generation_context=generation_context
             )
             
-            # Step 7: Update memory system
+            # Step 10: Update memory system and emotional memory
             for chunk in new_chunks:
                 await self.memory_manager.store_memory_chunk(chunk)
+                
+                # Update emotional states with chunk IDs
+                for emotional_state in emotional_states:
+                    if emotional_state.source_chunk_id is None:
+                        emotional_state.source_chunk_id = chunk.id
             
-            # Step 8: Calculate quality metrics
+            # Step 11: Calculate quality metrics
             quality_score = await self._calculate_content_quality(generated_content, memory_context)
             originality_score = await self._calculate_originality_score(generated_content)
             
@@ -144,10 +282,20 @@ class IntegratedNovelMemorySystem:
                 generation_metadata={
                     "context_chunks_used": len(memory_context.split("===")),
                     "consistency_checks_passed": content_valid,
-                    "auto_fixes_applied": len(post_issues) - len(remaining_issues)
+                    "auto_fixes_applied": len(post_issues) - len(remaining_issues),
+                    "emotional_states_count": len(emotional_states),
+                    "structure_validation_performed": structure_validation_result is not None,
+                    "style_analysis_performed": style_analysis_result is not None
                 },
                 quality_score=quality_score,
-                originality_score=originality_score
+                originality_score=originality_score,
+                emotional_states_detected=emotional_states,
+                emotional_consistency_score=emotional_consistency_score,
+                emotional_arc_progression=emotional_arc_progression,
+                structure_validation_result=structure_validation_result,
+                structure_adherence_score=structure_adherence_score,
+                style_analysis_result=style_analysis_result,
+                style_consistency_score=style_consistency_score
             )
             
         except Exception as e:
@@ -515,6 +663,127 @@ class IntegratedNovelMemorySystem:
         location_memories.sort(key=lambda x: x['chapter'], reverse=True)
         
         return location_memories
+
+    async def _calculate_emotional_consistency(self, emotional_states: List[EmotionalState], 
+                                             generation_context: GenerationContext) -> float:
+        """Calculate emotional consistency score for generated content"""
+        
+        if not emotional_states or not generation_context.character_emotional_states:
+            return 0.0
+        
+        try:
+            consistency_scores = []
+            
+            for emotional_state in emotional_states:
+                character_name = emotional_state.character_name
+                
+                # Check if we have expected emotional state for this character
+                if character_name in generation_context.character_emotional_states:
+                    expected_state = generation_context.character_emotional_states[character_name]
+                    
+                    # Calculate similarity between expected and detected emotions
+                    similarity = await self._calculate_emotional_similarity(
+                        expected_state, emotional_state
+                    )
+                    consistency_scores.append(similarity)
+            
+            # Return average consistency score
+            return sum(consistency_scores) / len(consistency_scores) if consistency_scores else 0.0
+            
+        except Exception as e:
+            logger.warning(f"Error calculating emotional consistency: {e}")
+            return 0.0
+
+    async def _calculate_emotional_similarity(self, expected: EmotionalState, 
+                                            detected: EmotionalState) -> float:
+        """Calculate similarity between two emotional states"""
+        
+        try:
+            # Simple similarity based on primary emotion and intensity
+            if expected.primary_emotion == detected.primary_emotion:
+                # Same emotion, check intensity difference
+                intensity_diff = abs(expected.intensity - detected.intensity)
+                return max(0.0, 1.0 - (intensity_diff / 10.0))  # Normalize to 0-1
+            else:
+                # Different emotions, check if they're related
+                related_emotions = {
+                    'joy': ['happiness', 'excitement', 'contentment'],
+                    'sadness': ['grief', 'melancholy', 'despair'],
+                    'anger': ['rage', 'frustration', 'irritation'],
+                    'fear': ['anxiety', 'terror', 'worry'],
+                    'surprise': ['shock', 'amazement', 'wonder'],
+                    'disgust': ['revulsion', 'contempt', 'disdain']
+                }
+                
+                for emotion_group in related_emotions.values():
+                    if (expected.primary_emotion in emotion_group and 
+                        detected.primary_emotion in emotion_group):
+                        return 0.5  # Partial match for related emotions
+                
+                return 0.0  # No similarity
+                
+        except Exception as e:
+            logger.warning(f"Error calculating emotional similarity: {e}")
+            return 0.0
+
+    async def _track_emotional_arc_progression(self, emotional_states: List[EmotionalState],
+                                             generation_context: GenerationContext) -> Dict[str, Any]:
+        """Track emotional arc progression for characters"""
+        
+        progression = {}
+        
+        try:
+            for emotional_state in emotional_states:
+                character_name = emotional_state.character_name
+                
+                if character_name not in progression:
+                    progression[character_name] = {
+                        'current_emotion': emotional_state.primary_emotion,
+                        'intensity': emotional_state.intensity,
+                        'arc_stage': self._determine_arc_stage(emotional_state, generation_context),
+                        'progression_direction': self._determine_progression_direction(
+                            emotional_state, generation_context
+                        )
+                    }
+            
+            # Update emotional arc statistics
+            if progression:
+                self.stats['emotional_arcs_updated'] += len(progression)
+                
+        except Exception as e:
+            logger.warning(f"Error tracking emotional arc progression: {e}")
+        
+        return progression
+
+    def _determine_arc_stage(self, emotional_state: EmotionalState, 
+                           generation_context: GenerationContext) -> str:
+        """Determine what stage of emotional arc the character is in"""
+        
+        # Simple heuristic based on chapter progress and emotion type
+        chapter_progress = generation_context.current_chapter / 20.0  # Assume 20 chapter novel
+        
+        if chapter_progress < 0.25:
+            return "setup"
+        elif chapter_progress < 0.5:
+            return "rising_action"
+        elif chapter_progress < 0.75:
+            return "climax"
+        else:
+            return "resolution"
+
+    def _determine_progression_direction(self, emotional_state: EmotionalState,
+                                       generation_context: GenerationContext) -> str:
+        """Determine if character's emotional state is progressing positively or negatively"""
+        
+        positive_emotions = ['joy', 'happiness', 'excitement', 'contentment', 'love', 'hope']
+        negative_emotions = ['sadness', 'anger', 'fear', 'disgust', 'despair', 'hatred']
+        
+        if emotional_state.primary_emotion in positive_emotions:
+            return "positive"
+        elif emotional_state.primary_emotion in negative_emotions:
+            return "negative"
+        else:
+            return "neutral"
 
     def _update_statistics(self, memory_context: str, new_chunks: List[MemoryChunk], issues: List[Any]):
         """Update system statistics"""

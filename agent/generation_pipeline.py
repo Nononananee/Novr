@@ -106,7 +106,11 @@ class AdvancedGenerationPipeline:
             tone_requirements={},
             constraints=None,
             pov_character=request.pov_character,
-            scene_location=request.current_scene
+            scene_location=request.current_scene,
+            # Add emotional context if available
+            character_emotional_states=getattr(request, 'character_emotional_states', None),
+            emotional_arc_requirements=getattr(request, 'emotional_arc_requirements', None),
+            target_emotional_tone=getattr(request, 'target_emotional_tone', None)
         )
 
     def _map_novel_result_to_pipeline_result(self, novel_result: NovelGenerationResult, request: GenerationRequest) -> GenerationResult:
@@ -120,6 +124,11 @@ class AdvancedGenerationPipeline:
         # Determine approval status based on consistency issues
         approval_status = "approved" if not novel_result.consistency_issues else "pending_review"
         
+        # Include emotional analysis in warnings if available
+        warnings = [str(issue) for issue in novel_result.consistency_issues]
+        if hasattr(novel_result, 'emotional_consistency_score') and novel_result.emotional_consistency_score < 0.5:
+            warnings.append(f"Low emotional consistency score: {novel_result.emotional_consistency_score:.2f}")
+        
         return GenerationResult(
             request_id=request.request_id,
             success=is_successful,
@@ -129,7 +138,7 @@ class AdvancedGenerationPipeline:
             approval_status=approval_status,
             proposal_id=None,  # Approval logic is now internal to memory system, this might need adjustment
             word_count=len(novel_result.generated_content.split()),
-            warnings=[str(issue) for issue in novel_result.consistency_issues],
+            warnings=warnings,
             errors=[novel_result.generation_metadata.get("error")] if novel_result.generation_metadata.get("error") else []
         )
 

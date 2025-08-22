@@ -323,63 +323,43 @@ class EmotionalMemorySystem:
                 new_state.intensity.value > active_arc.peak_emotion.intensity.value):
                 active_arc.peak_emotion = new_state
     
-    async def get_character_emotional_history(
-        self,
-        character: str,
-        limit: int = 10
-    ) -> List[EmotionalState]:
-        """Get emotional history for character."""
-        
+    async def validate_emotional_consistency(self, character_name: str, new_emotion: EmotionCategory) -> bool:
+        """Validate emotional consistency for a character's new emotion."""
+        # Retrieve recent emotional states
+        recent_states = await self.get_character_emotional_history(character_name, limit=5)
+        if not recent_states:
+            return True  # No history, so consistent
+
+        # Check for conflicting emotions in recent states
+        for state in recent_states:
+            if self._emotions_conflict(state.dominant_emotion.value, new_emotion.value):
+                return False
+        return True
+
+    async def get_character_emotional_history(self, character_name: str, limit: int = 10) -> List[EmotionalState]:
+        """Retrieve recent emotional states for a character from the database."""
         if self.db_utils:
-            # Get from database
             try:
-                async with self.db_utils.acquire() as conn:
-                    results = await conn.fetch(
-                        """
-                        SELECT character_name, dominant_emotion, intensity, 
-                               emotion_vector, trigger_event, source_type, 
-                               confidence_score, created_at
-                        FROM character_emotions
-                        WHERE character_name = $1
-                        ORDER BY created_at DESC
-                        LIMIT $2
-                        """,
-                        character, limit
+                rows = await self.db_utils.fetch_character_emotions(character_name, limit)
+                return [
+                    EmotionalState(
+                        character_name=row["character_name"],
+                        dominant_emotion=EmotionCategory(row["dominant_emotion"]),
+                        intensity=EmotionIntensity(row["intensity"]),
+                        emotion_vector=row["emotion_vector"],
+                        trigger_event=row["trigger_event"],
+                        confidence_score=row["confidence_score"],
+                        source_chunk_id=row["chunk_id"]
                     )
-                    
-                    emotional_states = []
-                    for row in results:
-                        emotion_vector = json.loads(row["emotion_vector"])
-                        
-                        state = EmotionalState(
-                            character_name=row["character_name"],
-                            dominant_emotion=EmotionCategory(row["dominant_emotion"]),
-                            intensity=EmotionIntensity(row["intensity"]),
-                            emotion_vector=emotion_vector,
-                            trigger_event=row["trigger_event"],
-                            timestamp=row["created_at"],
-                            confidence_score=row["confidence_score"]
-                        )
-                        emotional_states.append(state)
-                    
-                    return emotional_states
-            
+                    for row in rows
+                ]
             except Exception as e:
-                logger.error(f"Error retrieving emotional history: {e}")
-        
-        # Fallback to in-memory data
-        if character in self.emotional_arcs:
-            arcs = self.emotional_arcs[character]
-            all_states = []
-            for arc in arcs:
-                all_states.extend(arc.emotional_journey)
-            
-            # Sort by timestamp and return recent states
-            all_states.sort(key=lambda x: x.timestamp, reverse=True)
-            return all_states[:limit]
-        
-        return []
-    
+                logger.error(f"Error fetching emotional history: {e}")
+                return []
+        else:
+            # Fallback to in-memory or empty
+            return []
+
     async def get_emotional_context_for_generation(
         self,
         characters: List[str],
@@ -478,6 +458,48 @@ class EmotionalMemorySystem:
         
         return conflicts
     
+    async def test_store_emotional_analysis(self):
+        from datetime import datetime
+        from unittest.mock import AsyncMock
+
+        # Setup mock db_utils
+        self.db_utils = AsyncMock()
+        self.db_utils.save_character_emotions = AsyncMock(return_value=None)
+
+        # Create dummy emotional states
+        emotional_states = [
+            EmotionalState(
+                character_name="Alice",
+                dominant_emotion=EmotionCategory.JOY,
+                intensity=EmotionIntensity.HIGH,
+                emotion_vector={"joy": 0.9, "sadness": 0.1},
+                trigger_event="Alice found a treasure",
+                confidence_score=0.95,
+                source_chunk_id="chunk1"
+            ),
+            EmotionalState(
+                character_name="Bob",
+                dominant_emotion=EmotionCategory.SADNESS,
+                intensity=EmotionIntensity.MEDIUM,
+                emotion_vector={"joy": 0.2, "sadness": 0.8},
+                trigger_event="Bob lost his way",
+                confidence_score=0.85,
+                source_chunk_id="chunk2"
+            )
+        ]
+
+        run_id = "test_run_123"
+        scene_id = "scene_abc"
+
+        # Call store_emotional_analysis
+        result = await self.store_emotional_analysis(emotional_states, run_id, scene_id)
+
+        # Assert db_utils.save_character_emotions called once
+        self.db_utils.save_character_emotions.assert_called_once()
+
+        # Assert result is True
+        assert result is True
+
     async def store_emotional_analysis(
         self,
         emotional_states: List[EmotionalState],
@@ -495,7 +517,6 @@ class EmotionalMemorySystem:
             
             for state in emotional_states:
                 emotion_data = {
-                    'run_id': run_id,
                     'scene_id': scene_id,
                     'chunk_id': state.source_chunk_id,
                     'character_name': state.character_name,
@@ -507,12 +528,12 @@ class EmotionalMemorySystem:
                     'related_character': None,  # Could be enhanced
                     'source_type': 'narrative',  # Could be enhanced to detect dialogue
                     'confidence_score': state.confidence_score,
-                    'method': method,
+                    'method': 'keyword_analysis',
                     'model_name': 'keyword_analyzer',
                     'model_version': 'v1.0',
                     'prompt_hash': None,
                     'span_start': 0,  # Could be enhanced
-                    'span_end': len(content) if content else 0,
+                    'span_end': 0,  # Could be enhanced
                     'sentence_index': 0,  # Could be enhanced
                     'intra_chunk_order': 0,  # Could be enhanced
                     'intensity_calibrated': self._calibrate_intensity(state.intensity),
@@ -529,6 +550,7 @@ class EmotionalMemorySystem:
         except Exception as e:
             logger.error(f"Error storing emotional analysis: {e}")
             return False
+
     
     def _get_emotion_category(self, emotion: EmotionCategory) -> str:
         """Get emotion category (positive/negative/neutral)."""
