@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pydantic_ai import Agent, RunContext
 from dotenv import load_dotenv
 
-from .prompts import SYSTEM_PROMPT
+from .prompts import NOVEL_SYSTEM_PROMPT
 from .providers import get_llm_model
 from .tools import (
     vector_search_tool,
@@ -55,7 +55,7 @@ class AgentDependencies:
 rag_agent = Agent(
     get_llm_model(),
     deps_type=AgentDependencies,
-    system_prompt=SYSTEM_PROMPT
+    system_prompt=NOVEL_SYSTEM_PROMPT
 )
 
 
@@ -67,18 +67,18 @@ async def vector_search(
     limit: int = 10
 ) -> List[Dict[str, Any]]:
     """
-    Search for relevant information using semantic similarity.
+    Search for relevant narrative content using semantic similarity.
     
-    This tool performs vector similarity search across document chunks
-    to find semantically related content. Returns the most relevant results
-    regardless of similarity score.
+    This tool performs vector similarity search across novel chunks
+    to find semantically related content like similar scenes, character
+    descriptions, emotional moments, or thematic elements.
     
     Args:
-        query: Search query to find similar content
+        query: Search query to find similar narrative content
         limit: Maximum number of results to return (1-50)
     
     Returns:
-        List of matching chunks ordered by similarity (best first)
+        List of matching narrative chunks ordered by similarity (best first)
     """
     input_data = VectorSearchInput(
         query=query,
@@ -106,17 +106,17 @@ async def graph_search(
     query: str
 ) -> List[Dict[str, Any]]:
     """
-    Search the knowledge graph for facts and relationships.
+    Search the knowledge graph for character relationships and story facts.
     
-    This tool queries the knowledge graph to find specific facts, relationships 
-    between entities, and temporal information. Best for finding specific facts,
-    relationships between companies/people/technologies, and time-based information.
+    This tool queries the knowledge graph to find specific facts about characters,
+    their relationships, plot events, and temporal story information. Best for
+    finding character connections, plot relationships, and story timeline data.
     
     Args:
-        query: Search query to find facts and relationships
+        query: Search query to find character/story facts and relationships
     
     Returns:
-        List of facts with associated episodes and temporal data
+        List of story facts with associated episodes and temporal data
     """
     input_data = GraphSearchInput(query=query)
     
@@ -258,18 +258,18 @@ async def get_entity_relationships(
     depth: int = 2
 ) -> Dict[str, Any]:
     """
-    Get all relationships for a specific entity in the knowledge graph.
+    Get all relationships for a specific character or story entity.
     
-    This tool explores the knowledge graph to find how a specific entity
-    (company, person, technology) relates to other entities. Best for
-    understanding how companies or technologies relate to each other.
+    This tool explores the knowledge graph to find how a specific character,
+    location, or story element relates to other entities. Best for
+    understanding character relationships, location connections, and plot element interactions.
     
     Args:
-        entity_name: Name of the entity to explore (e.g., "Google", "OpenAI")
+        entity_name: Name of the character/entity to explore (e.g., "Aragorn", "Hogwarts")
         depth: Maximum traversal depth for relationships (1-5)
     
     Returns:
-        Entity relationships and connected entities with relationship types
+        Character/entity relationships and connected entities with relationship types
     """
     input_data = EntityRelationshipInput(
         entity_name=entity_name,
@@ -287,19 +287,19 @@ async def get_entity_timeline(
     end_date: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
-    Get the timeline of facts for a specific entity.
+    Get the timeline of story events for a specific character or entity.
     
-    This tool retrieves chronological information about an entity,
-    showing how information has evolved over time. Best for understanding
-    how information about an entity has developed or changed.
+    This tool retrieves chronological information about a character or story element,
+    showing how their story has developed over time. Best for understanding
+    character development arcs, plot progression, and story timeline.
     
     Args:
-        entity_name: Name of the entity (e.g., "Microsoft", "AI")
+        entity_name: Name of the character/entity (e.g., "Frodo", "The Ring")
         start_date: Start date in ISO format (YYYY-MM-DD), optional
         end_date: End date in ISO format (YYYY-MM-DD), optional
     
     Returns:
-        Chronological list of facts about the entity with timestamps
+        Chronological list of story events about the character/entity with timestamps
     """
     input_data = EntityTimelineInput(
         entity_name=entity_name,
@@ -308,3 +308,337 @@ async def get_entity_timeline(
     )
     
     return await get_entity_timeline_tool(input_data)
+
+
+# Novel-specific tools
+@rag_agent.tool
+async def create_novel(
+    ctx: RunContext[AgentDependencies],
+    title: str,
+    author: str = "",
+    genre: str = "general",
+    summary: str = ""
+) -> Dict[str, Any]:
+    """
+    Create a new novel in the system.
+    
+    This tool creates a new novel entry with basic metadata. Use this when
+    starting work on a new novel project or when organizing existing content
+    into a novel structure.
+    
+    Args:
+        title: Title of the novel
+        author: Author name (optional)
+        genre: Genre of the novel (e.g., fantasy, mystery, romance)
+        summary: Brief summary of the novel (optional)
+    
+    Returns:
+        Novel creation result with ID and metadata
+    """
+    try:
+        from .db_utils import create_novel
+        
+        novel_id = await create_novel(
+            title=title,
+            author=author,
+            genre=genre,
+            summary=summary if summary else None
+        )
+        
+        return {
+            "novel_id": novel_id,
+            "title": title,
+            "author": author,
+            "genre": genre,
+            "status": "created",
+            "message": f"Novel '{title}' created successfully"
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "failed",
+            "message": f"Failed to create novel '{title}'"
+        }
+
+
+@rag_agent.tool
+async def list_novels(
+    ctx: RunContext[AgentDependencies],
+    limit: int = 10
+) -> List[Dict[str, Any]]:
+    """
+    List all novels in the system.
+    
+    This tool retrieves a list of all novels with their basic information.
+    Useful for getting an overview of available novels or selecting a novel
+    to work with.
+    
+    Args:
+        limit: Maximum number of novels to return (1-50)
+    
+    Returns:
+        List of novels with their metadata
+    """
+    try:
+        from .db_utils import list_novels
+        
+        novels = await list_novels(limit=min(limit, 50))
+        
+        return novels
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": "Failed to retrieve novels"
+        }]
+
+
+@rag_agent.tool
+async def create_character(
+    ctx: RunContext[AgentDependencies],
+    novel_id: str,
+    name: str,
+    personality_traits: List[str] = None,
+    background: str = "",
+    role: str = "minor"
+) -> Dict[str, Any]:
+    """
+    Create a new character for a novel.
+    
+    This tool creates a character with specified traits and background.
+    Characters are essential for maintaining consistency in storytelling
+    and can be referenced throughout the novel.
+    
+    Args:
+        novel_id: ID of the novel this character belongs to
+        name: Character name
+        personality_traits: List of personality traits (optional)
+        background: Character background story (optional)
+        role: Character role (protagonist, antagonist, supporting, minor)
+    
+    Returns:
+        Character creation result with ID and details
+    """
+    try:
+        from .db_utils import create_character
+        
+        character_id = await create_character(
+            novel_id=novel_id,
+            name=name,
+            personality_traits=personality_traits or [],
+            background=background,
+            role=role
+        )
+        
+        return {
+            "character_id": character_id,
+            "name": name,
+            "role": role,
+            "personality_traits": personality_traits or [],
+            "background": background,
+            "status": "created",
+            "message": f"Character '{name}' created successfully"
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "failed",
+            "message": f"Failed to create character '{name}'"
+        }
+
+
+@rag_agent.tool
+async def list_characters(
+    ctx: RunContext[AgentDependencies],
+    novel_id: str
+) -> List[Dict[str, Any]]:
+    """
+    List all characters for a specific novel.
+    
+    This tool retrieves all characters associated with a novel, showing
+    their roles, traits, and basic information. Useful for character
+    consistency checks and story development.
+    
+    Args:
+        novel_id: ID of the novel to get characters for
+    
+    Returns:
+        List of characters with their details
+    """
+    try:
+        from .db_utils import list_characters
+        
+        characters = await list_characters(novel_id=novel_id)
+        
+        return characters
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": f"Failed to retrieve characters for novel {novel_id}"
+        }]
+
+
+@rag_agent.tool
+async def search_novel_content(
+    ctx: RunContext[AgentDependencies],
+    novel_id: str,
+    query: str,
+    character_filter: str = None,
+    emotional_tone_filter: str = None,
+    content_type: str = None,
+    limit: int = 10
+) -> List[Dict[str, Any]]:
+    """
+    Search for specific content within a novel.
+    
+    This tool performs targeted searches within a novel's content with
+    various filters. Useful for finding specific scenes, character moments,
+    or thematic elements within the story.
+    
+    Args:
+        novel_id: ID of the novel to search in
+        query: Search query text
+        character_filter: Filter by character name (optional)
+        emotional_tone_filter: Filter by emotional tone (optional)
+        content_type: Filter by content type (dialogue, narration, etc.)
+        limit: Maximum number of results (1-20)
+    
+    Returns:
+        List of matching content with context information
+    """
+    try:
+        from .db_utils import search_novel_content
+        
+        results = await search_novel_content(
+            novel_id=novel_id,
+            query=query,
+            character_filter=character_filter,
+            emotional_tone_filter=emotional_tone_filter,
+            content_type=content_type,
+            limit=min(limit, 20)
+        )
+        
+        return results
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": f"Failed to search novel content for query '{query}'"
+        }]
+
+
+@rag_agent.tool
+async def get_character_arc(
+    ctx: RunContext[AgentDependencies],
+    character_id: str
+) -> List[Dict[str, Any]]:
+    """
+    Get the development arc of a character across the story.
+    
+    This tool traces a character's appearances and development throughout
+    the novel, showing their progression across chapters and scenes.
+    Essential for character consistency and development analysis.
+    
+    Args:
+        character_id: ID of the character to analyze
+    
+    Returns:
+        Character's development arc with scenes and progression
+    """
+    try:
+        from .db_utils import get_character_arc
+        
+        arc_data = await get_character_arc(character_id=character_id)
+        
+        return arc_data
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": f"Failed to retrieve character arc for character {character_id}"
+        }]
+
+
+@rag_agent.tool
+async def create_chapter(
+    ctx: RunContext[AgentDependencies],
+    novel_id: str,
+    chapter_number: int,
+    title: str = None,
+    summary: str = None
+) -> Dict[str, Any]:
+    """
+    Create a new chapter for a novel.
+    
+    This tool creates a chapter structure within a novel. Chapters help
+    organize the story and provide structure for scenes and narrative flow.
+    
+    Args:
+        novel_id: ID of the novel this chapter belongs to
+        chapter_number: Chapter number in sequence
+        title: Chapter title (optional)
+        summary: Brief chapter summary (optional)
+    
+    Returns:
+        Chapter creation result with ID and details
+    """
+    try:
+        from .db_utils import create_chapter
+        
+        chapter_id = await create_chapter(
+            novel_id=novel_id,
+            chapter_number=chapter_number,
+            title=title,
+            summary=summary
+        )
+        
+        return {
+            "chapter_id": chapter_id,
+            "chapter_number": chapter_number,
+            "title": title,
+            "summary": summary,
+            "status": "created",
+            "message": f"Chapter {chapter_number} created successfully"
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "failed",
+            "message": f"Failed to create chapter {chapter_number}"
+        }
+
+
+@rag_agent.tool
+async def get_novel_chapters(
+    ctx: RunContext[AgentDependencies],
+    novel_id: str,
+    start_chapter: int = 1,
+    end_chapter: int = None
+) -> List[Dict[str, Any]]:
+    """
+    Get chapters of a novel within a specified range.
+    
+    This tool retrieves chapter information for a novel, optionally
+    filtering by chapter range. Useful for reviewing story structure
+    and chapter organization.
+    
+    Args:
+        novel_id: ID of the novel to get chapters for
+        start_chapter: Starting chapter number (default: 1)
+        end_chapter: Ending chapter number (optional, gets all if not specified)
+    
+    Returns:
+        List of chapters with their details and metadata
+    """
+    try:
+        from .db_utils import get_novel_chapters
+        
+        chapters = await get_novel_chapters(
+            novel_id=novel_id,
+            start_chapter=start_chapter,
+            end_chapter=end_chapter
+        )
+        
+        return chapters
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": f"Failed to retrieve chapters for novel {novel_id}"
+        }]

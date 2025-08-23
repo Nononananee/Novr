@@ -2,7 +2,7 @@
 Pydantic models for data validation and serialization.
 """
 
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Dict, Any, Optional, Literal, Union
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict, field_validator
@@ -21,6 +21,52 @@ class SearchType(str, Enum):
     VECTOR = "vector"
     HYBRID = "hybrid"
     GRAPH = "graph"
+
+
+# Novel-specific enums
+class EmotionalTone(str, Enum):
+    """Emotional tones for novel content."""
+    JOYFUL = "joyful"
+    MELANCHOLIC = "melancholic"
+    TENSE = "tense"
+    ROMANTIC = "romantic"
+    MYSTERIOUS = "mysterious"
+    PEACEFUL = "peaceful"
+    DRAMATIC = "dramatic"
+    HUMOROUS = "humorous"
+    ANGRY = "angry"
+    FEARFUL = "fearful"
+    HOPEFUL = "hopeful"
+    NOSTALGIC = "nostalgic"
+
+
+class ChunkType(str, Enum):
+    """Types of narrative chunks."""
+    DIALOGUE = "dialogue"
+    NARRATION = "narration"
+    DESCRIPTION = "description"
+    ACTION = "action"
+    INTERNAL_MONOLOGUE = "internal_monologue"
+    TRANSITION = "transition"
+    SCENE_BREAK = "scene_break"
+
+
+class CharacterRole(str, Enum):
+    """Character roles in the story."""
+    PROTAGONIST = "protagonist"
+    ANTAGONIST = "antagonist"
+    SUPPORTING = "supporting"
+    MINOR = "minor"
+    NARRATOR = "narrator"
+
+
+class PlotSignificance(str, Enum):
+    """Plot significance levels."""
+    CRITICAL = "critical"
+    IMPORTANT = "important"
+    MODERATE = "moderate"
+    MINOR = "minor"
+    BACKGROUND = "background"
 
 
 # Request Models
@@ -323,4 +369,219 @@ class HealthStatus(BaseModel):
     graph_database: bool
     llm_connection: bool
     version: str
-    timestamp: datetime
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+
+# Novel-specific Models
+class Character(BaseModel):
+    """Character model for novels."""
+    id: Optional[str] = None
+    name: str
+    personality_traits: List[str] = Field(default_factory=list)
+    background: str = ""
+    motivations: List[str] = Field(default_factory=list)
+    relationships: Dict[str, str] = Field(default_factory=dict)  # character_id -> relationship_type
+    emotional_state: Optional[Dict[str, float]] = None  # emotion -> intensity
+    development_arc: Optional[str] = None
+    role: CharacterRole = CharacterRole.MINOR
+    first_appearance: Optional[str] = None
+    dialogue_patterns: List[str] = Field(default_factory=list)
+    physical_description: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class Location(BaseModel):
+    """Location/setting model for novels."""
+    id: Optional[str] = None
+    name: str
+    description: str
+    location_type: str = "general"  # e.g., "city", "building", "room", "landscape"
+    atmosphere: Optional[str] = None
+    significance: PlotSignificance = PlotSignificance.BACKGROUND
+    first_appearance: Optional[str] = None
+    associated_characters: List[str] = Field(default_factory=list)
+    associated_events: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class Scene(BaseModel):
+    """Scene model for novels."""
+    id: Optional[str] = None
+    chapter_id: Optional[str] = None
+    title: Optional[str] = None
+    content: str
+    setting: Optional[str] = None
+    characters_present: List[str] = Field(default_factory=list)
+    plot_points: List[str] = Field(default_factory=list)
+    emotional_tone: Optional[EmotionalTone] = None
+    conflict_level: float = Field(default=0.5, ge=0.0, le=1.0)
+    purpose: str = ""  # E.g., character development, plot advancement
+    chunk_type: ChunkType = ChunkType.NARRATION
+    significance: PlotSignificance = PlotSignificance.MODERATE
+    word_count: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class Chapter(BaseModel):
+    """Chapter model for novels."""
+    id: Optional[str] = None
+    novel_id: str
+    chapter_number: int
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    word_count: Optional[int] = None
+    scenes: List[str] = Field(default_factory=list)  # scene IDs
+    main_characters: List[str] = Field(default_factory=list)
+    plot_threads: List[str] = Field(default_factory=list)
+    emotional_arc: Optional[Dict[str, Any]] = None
+    significance: PlotSignificance = PlotSignificance.MODERATE
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class Novel(BaseModel):
+    """Novel model."""
+    id: Optional[str] = None
+    title: str
+    author: str
+    genre: str = "general"
+    summary: Optional[str] = None
+    total_word_count: Optional[int] = None
+    chapter_count: Optional[int] = None
+    main_characters: List[str] = Field(default_factory=list)
+    main_themes: List[str] = Field(default_factory=list)
+    setting_overview: Optional[str] = None
+    target_audience: Optional[str] = None
+    completion_status: str = "in_progress"  # "planning", "in_progress", "completed"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class PlotThread(BaseModel):
+    """Plot thread/storyline model."""
+    id: Optional[str] = None
+    novel_id: str
+    name: str
+    description: str
+    status: str = "active"  # "active", "resolved", "abandoned"
+    significance: PlotSignificance = PlotSignificance.MODERATE
+    involved_characters: List[str] = Field(default_factory=list)
+    key_events: List[str] = Field(default_factory=list)
+    resolution: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class EmotionalArc(BaseModel):
+    """Emotional arc tracking model."""
+    id: Optional[str] = None
+    entity_id: str  # character_id, scene_id, or chapter_id
+    entity_type: str  # "character", "scene", "chapter"
+    emotional_progression: List[Dict[str, Any]] = Field(default_factory=list)
+    dominant_emotions: List[str] = Field(default_factory=list)
+    emotional_intensity: float = Field(default=0.5, ge=0.0, le=1.0)
+    turning_points: List[Dict[str, Any]] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+# Novel-specific Request Models
+class NovelGenerationRequest(ChatRequest):
+    """Extended request for novel generation."""
+    novel_id: Optional[str] = None
+    chapter_number: Optional[int] = None
+    scene_id: Optional[str] = None
+    genre: str = "fantasy"
+    tone: str = "serious"
+    target_emotional_arc: Optional[Dict[str, Any]] = None
+    character_states: Optional[Dict[str, Dict[str, Any]]] = None
+    target_word_count: int = 500
+    generation_type: str = "continuation"  # "continuation", "dialogue", "description", etc.
+    constraints: Optional[Dict[str, Any]] = None
+
+
+class CharacterAnalysisRequest(BaseModel):
+    """Request for character analysis."""
+    character_name: str
+    novel_id: Optional[str] = None
+    analysis_type: str = "development"  # "development", "relationships", "consistency"
+    from_chapter: int = 1
+    to_chapter: Optional[int] = None
+
+
+class EmotionalAnalysisRequest(BaseModel):
+    """Request for emotional analysis."""
+    content: str
+    context: Optional[Dict[str, Any]] = None
+    analysis_depth: str = "basic"  # "basic", "detailed", "comprehensive"
+
+
+class PlotAnalysisRequest(BaseModel):
+    """Request for plot analysis."""
+    novel_id: str
+    analysis_type: str = "structure"  # "structure", "consistency", "pacing"
+    focus_elements: List[str] = Field(default_factory=list)
+
+
+# Novel-specific Response Models
+class CharacterAnalysisResponse(BaseModel):
+    """Response for character analysis."""
+    character_name: str
+    development_score: float = Field(ge=0.0, le=1.0)
+    consistency_score: float = Field(ge=0.0, le=1.0)
+    relationships: List[Dict[str, Any]] = Field(default_factory=list)
+    development_arc: List[Dict[str, Any]] = Field(default_factory=list)
+    personality_traits: List[str] = Field(default_factory=list)
+    dialogue_patterns: List[str] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)
+
+
+class EmotionalAnalysisResponse(BaseModel):
+    """Response for emotional analysis."""
+    dominant_emotions: List[str] = Field(default_factory=list)
+    emotional_intensity: float = Field(ge=0.0, le=1.0)
+    emotional_progression: List[Dict[str, Any]] = Field(default_factory=list)
+    consistency_score: float = Field(ge=0.0, le=1.0)
+    suggestions: List[str] = Field(default_factory=list)
+
+
+class PlotAnalysisResponse(BaseModel):
+    """Response for plot analysis."""
+    structure_score: float = Field(ge=0.0, le=1.0)
+    consistency_score: float = Field(ge=0.0, le=1.0)
+    pacing_score: float = Field(ge=0.0, le=1.0)
+    plot_threads: List[Dict[str, Any]] = Field(default_factory=list)
+    plot_holes: List[Dict[str, Any]] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)
+
+
+class NovelConsistencyReport(BaseModel):
+    """Comprehensive consistency report for a novel."""
+    novel_id: str
+    overall_score: float = Field(ge=0.0, le=1.0)
+    character_consistency: float = Field(ge=0.0, le=1.0)
+    plot_consistency: float = Field(ge=0.0, le=1.0)
+    emotional_consistency: float = Field(ge=0.0, le=1.0)
+    style_consistency: float = Field(ge=0.0, le=1.0)
+    violations: List[Dict[str, Any]] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)
+    generated_at: datetime = Field(default_factory=datetime.now)
+
+
+# Enhanced Chunk Model for Novels
+class NovelChunk(Chunk):
+    """Enhanced chunk model for novel content."""
+    chunk_type: ChunkType = ChunkType.NARRATION
+    emotional_tone: Optional[EmotionalTone] = None
+    characters_present: List[str] = Field(default_factory=list)
+    location: Optional[str] = None
+    plot_significance: PlotSignificance = PlotSignificance.BACKGROUND
+    dialogue_count: int = 0
+    action_intensity: float = Field(default=0.0, ge=0.0, le=1.0)
+    emotional_intensity: float = Field(default=0.0, ge=0.0, le=1.0)
+    narrative_purpose: Optional[str] = None

@@ -645,6 +645,245 @@ async def get_session_info(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Novel-specific API endpoints
+@app.post("/novel/create")
+async def create_novel_endpoint(
+    title: str,
+    author: str = "",
+    genre: str = "general",
+    summary: str = ""
+):
+    """Create a new novel."""
+    try:
+        from .db_utils import create_novel, create_novel_tables
+        
+        # Ensure novel tables exist
+        await create_novel_tables()
+        
+        novel_id = await create_novel(
+            title=title,
+            author=author,
+            genre=genre,
+            summary=summary if summary else None
+        )
+        
+        return {
+            "novel_id": novel_id,
+            "title": title,
+            "author": author,
+            "genre": genre,
+            "summary": summary,
+            "status": "created"
+        }
+        
+    except Exception as e:
+        logger.error(f"Novel creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/novels")
+async def list_novels_endpoint(limit: int = 20, offset: int = 0):
+    """List all novels."""
+    try:
+        from .db_utils import list_novels
+        
+        novels = await list_novels(limit=limit, offset=offset)
+        
+        return {
+            "novels": novels,
+            "total": len(novels),
+            "limit": limit,
+            "offset": offset
+        }
+        
+    except Exception as e:
+        logger.error(f"Novel listing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/novels/{novel_id}")
+async def get_novel_endpoint(novel_id: str):
+    """Get a specific novel."""
+    try:
+        from .db_utils import get_novel
+        
+        novel = await get_novel(novel_id)
+        if not novel:
+            raise HTTPException(status_code=404, detail="Novel not found")
+        
+        return novel
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Novel retrieval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/novels/{novel_id}/characters")
+async def create_character_endpoint(
+    novel_id: str,
+    name: str,
+    personality_traits: List[str] = None,
+    background: str = "",
+    role: str = "minor"
+):
+    """Create a character for a novel."""
+    try:
+        from .db_utils import create_character
+        
+        character_id = await create_character(
+            novel_id=novel_id,
+            name=name,
+            personality_traits=personality_traits or [],
+            background=background,
+            role=role
+        )
+        
+        return {
+            "character_id": character_id,
+            "name": name,
+            "role": role,
+            "personality_traits": personality_traits or [],
+            "background": background,
+            "status": "created"
+        }
+        
+    except Exception as e:
+        logger.error(f"Character creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/novels/{novel_id}/characters")
+async def list_characters_endpoint(novel_id: str):
+    """List characters for a novel."""
+    try:
+        from .db_utils import list_characters
+        
+        characters = await list_characters(novel_id=novel_id)
+        
+        return {
+            "characters": characters,
+            "novel_id": novel_id,
+            "total": len(characters)
+        }
+        
+    except Exception as e:
+        logger.error(f"Character listing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/novels/{novel_id}/chapters")
+async def create_chapter_endpoint(
+    novel_id: str,
+    chapter_number: int,
+    title: str = None,
+    summary: str = None
+):
+    """Create a chapter for a novel."""
+    try:
+        from .db_utils import create_chapter
+        
+        chapter_id = await create_chapter(
+            novel_id=novel_id,
+            chapter_number=chapter_number,
+            title=title,
+            summary=summary
+        )
+        
+        return {
+            "chapter_id": chapter_id,
+            "chapter_number": chapter_number,
+            "title": title,
+            "summary": summary,
+            "status": "created"
+        }
+        
+    except Exception as e:
+        logger.error(f"Chapter creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/novels/{novel_id}/chapters")
+async def get_chapters_endpoint(
+    novel_id: str,
+    start_chapter: int = 1,
+    end_chapter: int = None
+):
+    """Get chapters for a novel."""
+    try:
+        from .db_utils import get_novel_chapters
+        
+        chapters = await get_novel_chapters(
+            novel_id=novel_id,
+            start_chapter=start_chapter,
+            end_chapter=end_chapter
+        )
+        
+        return {
+            "chapters": chapters,
+            "novel_id": novel_id,
+            "total": len(chapters)
+        }
+        
+    except Exception as e:
+        logger.error(f"Chapter retrieval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/novels/{novel_id}/search")
+async def search_novel_content_endpoint(
+    novel_id: str,
+    query: str,
+    character_filter: str = None,
+    emotional_tone_filter: str = None,
+    content_type: str = None,
+    limit: int = 10
+):
+    """Search content within a specific novel."""
+    try:
+        from .db_utils import search_novel_content
+        
+        results = await search_novel_content(
+            novel_id=novel_id,
+            query=query,
+            character_filter=character_filter,
+            emotional_tone_filter=emotional_tone_filter,
+            content_type=content_type,
+            limit=limit
+        )
+        
+        return {
+            "results": results,
+            "novel_id": novel_id,
+            "query": query,
+            "total": len(results)
+        }
+        
+    except Exception as e:
+        logger.error(f"Novel content search failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/characters/{character_id}/arc")
+async def get_character_arc_endpoint(character_id: str):
+    """Get character development arc."""
+    try:
+        from .db_utils import get_character_arc
+        
+        arc_data = await get_character_arc(character_id=character_id)
+        
+        return {
+            "character_id": character_id,
+            "arc_data": arc_data,
+            "total_appearances": len(arc_data)
+        }
+        
+    except Exception as e:
+        logger.error(f"Character arc retrieval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Exception handlers
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

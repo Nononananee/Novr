@@ -1,14 +1,18 @@
 """
-Graph utilities for Neo4j/Graphiti integration.
+Novel-aware graph utilities for Neo4j/Graphiti integration.
+Enhanced for literary content processing with character, plot, and emotional tracking.
 """
 
 import os
 import json
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Set
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from enum import Enum
 import asyncio
+import re
 
 from graphiti_core import Graphiti
 from graphiti_core.utils.maintenance.graph_data_operations import clear_data
@@ -22,6 +26,64 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+
+class NovelEntityType(Enum):
+    """Types of novel entities."""
+    CHARACTER = "character"
+    LOCATION = "location"
+    PLOT_POINT = "plot_point"
+    THEME = "theme"
+    OBJECT = "object"
+    CONCEPT = "concept"
+    SCENE = "scene"
+    CHAPTER = "chapter"
+
+
+class RelationshipType(Enum):
+    """Types of relationships in novels."""
+    CHARACTER_RELATIONSHIP = "character_relationship"
+    CHARACTER_LOCATION = "character_at_location"
+    CHARACTER_PLOT = "character_in_plot"
+    PLOT_SEQUENCE = "plot_sequence"
+    THEME_MANIFESTATION = "theme_manifestation"
+    EMOTIONAL_CONNECTION = "emotional_connection"
+    TEMPORAL_SEQUENCE = "temporal_sequence"
+
+
+@dataclass
+class NovelEntity:
+    """Represents a novel entity with metadata."""
+    name: str
+    entity_type: NovelEntityType
+    description: str
+    first_appearance: Optional[str] = None
+    significance_score: float = 0.0
+    emotional_associations: List[str] = None
+    metadata: Dict[str, Any] = None
+    
+    def __post_init__(self):
+        if self.emotional_associations is None:
+            self.emotional_associations = []
+        if self.metadata is None:
+            self.metadata = {}
+
+
+@dataclass
+class CharacterProfile:
+    """Detailed character profile."""
+    name: str
+    personality_traits: List[str]
+    relationships: Dict[str, str]
+    development_arc: List[str]
+    emotional_states: Dict[str, float]
+    first_appearance: str
+    significance_score: float
+    dialogue_patterns: List[str] = None
+    
+    def __post_init__(self):
+        if self.dialogue_patterns is None:
+            self.dialogue_patterns = []
 
 # Help from this PR for setting up the custom clients: https://github.com/getzep/graphiti/pull/601/files
 class GraphitiClient:
@@ -351,6 +413,221 @@ class GraphitiClient:
             await self.graphiti.build_indices_and_constraints()
             
             logger.warning("Reinitialized Graphiti client (fresh indices created)")
+    
+    # Novel-specific methods
+    async def add_novel_episode(
+        self,
+        episode_id: str,
+        content: str,
+        novel_title: str,
+        chapter: Optional[str] = None,
+        characters: Optional[List[str]] = None,
+        location: Optional[str] = None,
+        emotional_tone: Optional[str] = None,
+        plot_significance: float = 0.5,
+        timestamp: Optional[datetime] = None
+    ):
+        """
+        Add a novel episode with enhanced narrative metadata.
+        
+        Args:
+            episode_id: Unique episode identifier
+            content: Episode content
+            novel_title: Title of the novel
+            chapter: Chapter information
+            characters: Characters present in this episode
+            location: Location/setting
+            emotional_tone: Emotional tone of the episode
+            plot_significance: Significance score (0.0 to 1.0)
+            timestamp: Episode timestamp
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        # Enhance content with narrative context
+        narrative_context = f"[Novel: {novel_title}]"
+        if chapter:
+            narrative_context += f" [Chapter: {chapter}]"
+        if characters:
+            narrative_context += f" [Characters: {', '.join(characters)}]"
+        if location:
+            narrative_context += f" [Location: {location}]"
+        if emotional_tone:
+            narrative_context += f" [Tone: {emotional_tone}]"
+        
+        enhanced_content = f"{narrative_context}\n\n{content}"
+        
+        episode_timestamp = timestamp or datetime.now(timezone.utc)
+        
+        from graphiti_core.nodes import EpisodeType
+        
+        await self.graphiti.add_episode(
+            name=episode_id,
+            episode_body=enhanced_content,
+            source=EpisodeType.text,
+            source_description=f"{novel_title} - Chapter {chapter or 'Unknown'}",
+            reference_time=episode_timestamp
+        )
+        
+        logger.info(f"Added novel episode {episode_id} for {novel_title}")
+    
+    async def search_character_development(
+        self,
+        character_name: str,
+        novel_title: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for character development across the story.
+        
+        Args:
+            character_name: Name of the character
+            novel_title: Optional novel title to filter results
+        
+        Returns:
+            Character development timeline
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        query = f"character development arc for {character_name}"
+        if novel_title:
+            query += f" in {novel_title}"
+        
+        results = await self.graphiti.search(query)
+        
+        return [
+            {
+                "fact": result.fact,
+                "uuid": str(result.uuid),
+                "valid_at": str(result.valid_at) if hasattr(result, 'valid_at') and result.valid_at else None,
+                "character": character_name,
+                "novel": novel_title
+            }
+            for result in results
+        ]
+    
+    async def search_emotional_content(
+        self,
+        emotion_type: str,
+        intensity_threshold: float = 0.5,
+        novel_title: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for content with specific emotional qualities.
+        
+        Args:
+            emotion_type: Type of emotion to search for
+            intensity_threshold: Minimum emotional intensity
+            novel_title: Optional novel title to filter results
+        
+        Returns:
+            Emotional content results
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        query = f"emotional content with {emotion_type} feelings"
+        if novel_title:
+            query += f" in {novel_title}"
+        
+        results = await self.graphiti.search(query)
+        
+        return [
+            {
+                "fact": result.fact,
+                "uuid": str(result.uuid),
+                "emotion_type": emotion_type,
+                "estimated_intensity": intensity_threshold,  # Would be calculated in real implementation
+                "novel": novel_title
+            }
+            for result in results
+        ]
+    
+    async def get_plot_connections(
+        self,
+        plot_element: str,
+        novel_title: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Get connections between plot elements.
+        
+        Args:
+            plot_element: Plot element to analyze
+            novel_title: Optional novel title to filter results
+        
+        Returns:
+            Plot connections and relationships
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        query = f"plot connections and relationships involving {plot_element}"
+        if novel_title:
+            query += f" in {novel_title}"
+        
+        results = await self.graphiti.search(query)
+        
+        connections = []
+        for result in results:
+            connections.append({
+                "fact": result.fact,
+                "uuid": str(result.uuid),
+                "plot_element": plot_element,
+                "connection_type": "narrative_link"  # Would be analyzed in real implementation
+            })
+        
+        return {
+            "central_plot_element": plot_element,
+            "connections": connections,
+            "novel": novel_title
+        }
+    
+    async def analyze_character_relationships(
+        self,
+        character1: str,
+        character2: Optional[str] = None,
+        novel_title: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Analyze relationships between characters.
+        
+        Args:
+            character1: First character
+            character2: Optional second character (if None, gets all relationships)
+            novel_title: Optional novel title to filter results
+        
+        Returns:
+            Character relationship analysis
+        """
+        if not self._initialized:
+            await self.initialize()
+        
+        if character2:
+            query = f"relationship between {character1} and {character2}"
+        else:
+            query = f"all relationships involving {character1}"
+        
+        if novel_title:
+            query += f" in {novel_title}"
+        
+        results = await self.graphiti.search(query)
+        
+        relationships = []
+        for result in results:
+            relationships.append({
+                "fact": result.fact,
+                "uuid": str(result.uuid),
+                "character1": character1,
+                "character2": character2,
+                "relationship_type": "character_interaction"  # Would be analyzed in real implementation
+            })
+        
+        return {
+            "primary_character": character1,
+            "target_character": character2,
+            "relationships": relationships,
+            "novel": novel_title
+        }
 
 
 # Global Graphiti client instance
@@ -446,3 +723,120 @@ async def test_graph_connection() -> bool:
     except Exception as e:
         logger.error(f"Graph connection test failed: {e}")
         return False
+
+
+# Novel-specific convenience functions
+async def add_novel_content_to_graph(
+    content: str,
+    novel_title: str,
+    chapter: Optional[str] = None,
+    characters: Optional[List[str]] = None,
+    location: Optional[str] = None,
+    emotional_tone: Optional[str] = None,
+    episode_id: Optional[str] = None
+) -> str:
+    """
+    Add novel content to the knowledge graph with narrative metadata.
+    
+    Args:
+        content: Novel content to add
+        novel_title: Title of the novel
+        chapter: Chapter information
+        characters: Characters present
+        location: Location/setting
+        emotional_tone: Emotional tone
+        episode_id: Optional episode ID
+    
+    Returns:
+        Episode ID
+    """
+    if not episode_id:
+        episode_id = f"novel_{novel_title}_{chapter or 'unknown'}_{datetime.now(timezone.utc).isoformat()}"
+    
+    await graph_client.add_novel_episode(
+        episode_id=episode_id,
+        content=content,
+        novel_title=novel_title,
+        chapter=chapter,
+        characters=characters,
+        location=location,
+        emotional_tone=emotional_tone
+    )
+    
+    return episode_id
+
+
+async def search_character_arc(
+    character_name: str,
+    novel_title: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Search for character development arc.
+    
+    Args:
+        character_name: Name of the character
+        novel_title: Optional novel title
+    
+    Returns:
+        Character development results
+    """
+    return await graph_client.search_character_development(character_name, novel_title)
+
+
+async def find_emotional_scenes(
+    emotion_type: str,
+    novel_title: Optional[str] = None,
+    intensity_threshold: float = 0.5
+) -> List[Dict[str, Any]]:
+    """
+    Find scenes with specific emotional content.
+    
+    Args:
+        emotion_type: Type of emotion to search for
+        novel_title: Optional novel title
+        intensity_threshold: Minimum emotional intensity
+    
+    Returns:
+        Emotional content results
+    """
+    return await graph_client.search_emotional_content(
+        emotion_type, intensity_threshold, novel_title
+    )
+
+
+async def analyze_plot_structure(
+    plot_element: str,
+    novel_title: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Analyze plot structure and connections.
+    
+    Args:
+        plot_element: Plot element to analyze
+        novel_title: Optional novel title
+    
+    Returns:
+        Plot analysis results
+    """
+    return await graph_client.get_plot_connections(plot_element, novel_title)
+
+
+async def get_character_relationships(
+    character1: str,
+    character2: Optional[str] = None,
+    novel_title: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get character relationships and interactions.
+    
+    Args:
+        character1: First character
+        character2: Optional second character
+        novel_title: Optional novel title
+    
+    Returns:
+        Character relationship analysis
+    """
+    return await graph_client.analyze_character_relationships(
+        character1, character2, novel_title
+    )
