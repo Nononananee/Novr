@@ -15,6 +15,14 @@ from datetime import datetime, timedelta
 import threading
 from collections import defaultdict, deque
 
+# Import enhanced memory monitoring
+try:
+    from agent.enhanced_memory_monitor import memory_monitor, get_memory_health
+    ENHANCED_MEMORY_AVAILABLE = True
+except ImportError:
+    ENHANCED_MEMORY_AVAILABLE = False
+    memory_monitor = None
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -84,11 +92,25 @@ class ProductionMonitor:
         tokens_processed: int = 0,
         chunks_created: int = 0,
         context_quality_score: float = 0.0,
-        memory_usage_mb: float = 0.0,
+        memory_usage_mb: float = None,  # Will auto-detect if None
         success: bool = True,
         error_message: Optional[str] = None
     ):
         """Record an operation for monitoring."""
+        
+        # Auto-detect memory usage if not provided
+        if memory_usage_mb is None and ENHANCED_MEMORY_AVAILABLE:
+            try:
+                current_memory = memory_monitor.get_current_memory_usage()
+                memory_usage_mb = current_memory["rss_mb"]
+                
+                # Record snapshot for detailed tracking
+                memory_monitor.record_snapshot(operation_type)
+            except Exception as e:
+                logger.warning(f"Failed to get accurate memory usage: {e}")
+                memory_usage_mb = 0.0
+        elif memory_usage_mb is None:
+            memory_usage_mb = 0.0
         
         metric = ProductionMetrics(
             timestamp=datetime.now(),

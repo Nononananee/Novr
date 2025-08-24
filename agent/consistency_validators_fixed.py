@@ -1,11 +1,20 @@
 """
 Consistency validators for proposal validation (Fixed version).
+Enhanced with robust error handling and graceful degradation.
 """
 
 import logging
 import re
 from typing import Dict, List, Any, Set
 from datetime import datetime
+
+from .error_handling_utils import (
+    robust_error_handler, 
+    ErrorSeverity, 
+    GracefulDegradation,
+    error_metrics,
+    safe_execute
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +46,7 @@ async def run_all_validators(
     return validators
 
 
+@robust_error_handler("fact_check_validation", ErrorSeverity.MEDIUM, max_retries=2)
 async def fact_check_validator(
     content: str,
     entity_data: Dict[str, Any],
@@ -105,14 +115,22 @@ async def fact_check_validator(
         
     except Exception as e:
         logger.error(f"Fact check validator failed: {e}")
-        return {
-            "score": 0.5,
-            "violations": [{"type": "validator_error", "message": str(e)}],
-            "suggestions": ["Manual fact checking required"],
-            "validator_type": "fact_check"
-        }
+        error_metrics.record_error("fact_check_validation", type(e).__name__, ErrorSeverity.MEDIUM)
+        
+        # Use graceful degradation instead of hard-coded fallback
+        from .error_handling_utils import ErrorContext
+        error_context = ErrorContext(
+            operation="fact_check_validation",
+            input_data={"content_length": len(content), "entity_count": len(entity_data)},
+            severity=ErrorSeverity.MEDIUM
+        )
+        
+        return await GracefulDegradation.get_validation_fallback(
+            content, "fact_check", error_context
+        )
 
 
+@robust_error_handler("behavior_consistency_validation", ErrorSeverity.MEDIUM, max_retries=2)
 async def behavior_consistency_validator(
     content: str,
     entity_data: Dict[str, Any]
@@ -187,12 +205,19 @@ async def behavior_consistency_validator(
         
     except Exception as e:
         logger.error(f"Behavior consistency validator failed: {e}")
-        return {
-            "score": 0.5,
-            "violations": [{"type": "validator_error", "message": str(e)}],
-            "suggestions": ["Manual behavior consistency check required"],
-            "validator_type": "behavior_consistency"
-        }
+        error_metrics.record_error("behavior_consistency_validation", type(e).__name__, ErrorSeverity.MEDIUM)
+        
+        # Use graceful degradation instead of hard-coded fallback
+        from .error_handling_utils import ErrorContext
+        error_context = ErrorContext(
+            operation="behavior_consistency_validation",
+            input_data={"content_length": len(content), "entity_name": entity_data.get("name", "unknown")},
+            severity=ErrorSeverity.MEDIUM
+        )
+        
+        return await GracefulDegradation.get_validation_fallback(
+            content, "behavior_consistency", error_context
+        )
 
 
 async def dialogue_style_validator(

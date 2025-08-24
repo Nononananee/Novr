@@ -44,6 +44,10 @@ asyncio-throttle==1.0.2
 aioredis==2.0.1
 aiocache==0.12.2
 
+# Caching (untuk API refactoring)
+redis==5.0.1
+redis[hiredis]==5.0.1
+
 # Performance monitoring
 psutil==5.9.6
 memory-profiler==0.61.0

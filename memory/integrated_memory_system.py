@@ -13,6 +13,15 @@ from .consistency_manager import LongTermConsistencyManager
 from novel.structure.narrative_structure_manager import NarrativeStructureManager, NarrativeStructure
 from novel.style.style_consistency_manager import StyleConsistencyManager, WritingStyle
 
+# Import enhanced context optimizer
+try:
+    from agent.enhanced_context_optimizer import optimize_context_with_quality_assurance, analyze_context_quality
+    ENHANCED_CONTEXT_AVAILABLE = True
+except ImportError:
+    ENHANCED_CONTEXT_AVAILABLE = False
+    optimize_context_with_quality_assurance = None
+    analyze_context_quality = None
+
 logger = logging.getLogger(__name__)
 
 @dataclass

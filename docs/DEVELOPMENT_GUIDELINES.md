@@ -16,24 +16,38 @@ The Creative RAG System for Novel Generation is a sophisticated AI system that c
 ### Component Organization
 ```
 agent/          # AI agent, tools, and generation pipeline
-├── agent.py                    # Main Pydantic AI agent
-├── tools.py                    # RAG and knowledge graph tools
-├── enhanced_context_builder.py # Advanced context building (760 lines)
-├── generation_pipeline.py      # Content generation orchestration
-├── consistency_validators.py   # Validation logic
-└── approval_api.py            # Human-in-the-loop workflow
+├── agent.py                    # Main Pydantic AI agent (19KB, 644 lines)
+├── tools.py                    # RAG and knowledge graph tools (11KB, 384 lines)
+├── api.py                      # FastAPI endpoints (28KB, 908 lines)
+├── context_optimizer.py        # Context optimization (27KB, 682 lines)
+├── generation_pipeline.py      # Content generation pipeline (23KB, 547 lines)
+├── consistency_validators_fixed.py # Validation logic (15KB, 426 lines)
+├── graph_utils.py              # Graph operations (27KB, 842 lines)
+├── models.py                   # Data models (21KB, 588 lines)
+├── db_utils.py                 # Database utilities (46KB, 1418 lines)
+├── memory_optimizer.py         # Memory optimization (16KB, 418 lines)
+├── performance_monitor.py      # Performance monitoring (16KB, 433 lines)
+├── prompts.py                  # System prompts (11KB, 266 lines)
+└── approval_api.py            # Human-in-the-loop workflow (14KB, 363 lines)
 
 ingestion/      # Document processing and chunking
-├── ingest.py                   # Main ingestion script
-├── enhanced_scene_chunker.py   # Advanced chunking (1,092 lines)
-├── embedder.py                 # Embedding generation
-└── graph_builder.py           # Knowledge graph building
+├── ingest.py                   # Main ingestion script (33KB, 829 lines)
+├── embedder.py                 # Embedding generation (41KB, 1057 lines)
+└── graph_builder.py           # Knowledge graph building (22KB, 567 lines)
 
 memory/         # Memory management system
-├── integrated_memory_system.py # Main memory controller
-├── cache_memory.py            # Multi-level caching
-├── long_term_memory.py        # Persistent storage with tiering
-└── consistency_manager.py     # Narrative consistency
+├── integrated_memory_system.py # Main memory controller (40KB, 876 lines)
+├── cache_memory.py            # Multi-level caching (28KB, 753 lines)
+├── long_term_memory.py        # Persistent storage (30KB, 706 lines)
+├── consistency_manager.py     # Narrative consistency (26KB, 565 lines)
+├── emotional_memory_system.py # Emotional intelligence (26KB, 698 lines)
+├── chunking_strategies.py     # Chunking strategies (22KB, 522 lines)
+└── memory_management_system.py # Memory management (16KB, 404 lines)
+
+novel/          # Novel-specific components
+├── character_management/       # Character management tools
+├── structure/                  # Narrative structure management
+└── style/                     # Style consistency management
 
 sql/           # Database schema
 templates/     # UI templates for approval workflow
@@ -45,8 +59,11 @@ tests/         # Comprehensive test suite
 ### File Size Limits
 - **Maximum 500 lines per file** - If approaching this limit, refactor into modules
 - **Current large files** (exceptions for complex implementations):
-  - `enhanced_scene_chunker.py`: 1,092 lines (complex chunking logic)
-  - `advanced_context_builder.py`: 760 lines (hierarchical retrieval)
+  - `db_utils.py`: 1,418 lines (comprehensive database operations)
+  - `embedder.py`: 1,057 lines (complex embedding generation)
+  - `integrated_memory_system.py`: 876 lines (comprehensive memory management)
+  - `ingest.py`: 829 lines (complete ingestion pipeline)
+  - `graph_utils.py`: 842 lines (extensive graph operations)
 
 ### Naming Conventions
 - **Files**: `snake_case.py`

@@ -13,6 +13,15 @@ from collections import defaultdict, deque
 import threading
 from contextlib import asynccontextmanager
 
+# Import enhanced memory monitoring
+try:
+    from .enhanced_memory_monitor import memory_monitor, MemoryProfiler
+    ENHANCED_MEMORY_AVAILABLE = True
+except ImportError:
+    ENHANCED_MEMORY_AVAILABLE = False
+    memory_monitor = None
+    MemoryProfiler = None
+
 logger = logging.getLogger(__name__)
 
 

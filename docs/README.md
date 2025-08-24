@@ -417,12 +417,27 @@ black agent/ ingestion/ memory/
 
 ## 🐛 Known Issues
 
-### Current Limitations
-1. **Large Document Processing**: Memory usage may spike with very large manuscripts (>1M words)
+### Current Performance Limitations
+1. **Real-world Content Success Rate**: Currently 33% for complex narrative content
+   - **Target**: Improve to >90% success rate
+   - **Impact**: May require multiple attempts for optimal results
+   - **Status**: Active optimization in progress
+
+2. **Context Quality Variability**: Scores vary between 0.906-1.021
+   - **Expected**: Consistent scores >0.9
+   - **Workaround**: Monitor context quality scores and regenerate if needed
+   - **Status**: Stabilization work in progress
+
+3. **Memory Monitoring Accuracy**: Current memory usage reporting may be inaccurate
+   - **Impact**: Difficult to optimize memory usage for large documents
+   - **Mitigation**: Manual monitoring recommended for large manuscripts
+   - **Status**: Improved monitoring implementation planned
+
+4. **Large Document Processing**: Memory usage may spike with very large manuscripts (>1M words)
    - **Workaround**: Process in smaller sections
    - **Status**: Optimization in progress
 
-2. **Concurrent Load**: High concurrent usage may cause database connection issues
+5. **Concurrent Load**: High concurrent usage may cause database connection issues
    - **Mitigation**: Connection pooling implemented
    - **Monitor**: Database connection metrics
 
