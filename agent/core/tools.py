@@ -23,8 +23,8 @@ from .graph_utils import (
     get_entity_relationships,
     graph_client
 )
-from .models import ChunkResult, GraphSearchResult, DocumentMetadata
-from .providers import get_embedding_client, get_embedding_model
+from ..models import ChunkResult, GraphSearchResult, DocumentMetadata
+from ..providers import get_embedding_client, get_embedding_model
 
 # Load environment variables
 load_dotenv()

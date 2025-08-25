@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 
-from .models import ToolCall
+from ..models import ToolCall
 from .api_exceptions import ValidationError, DatabaseError
 from .api_retry import retry_decorator
 

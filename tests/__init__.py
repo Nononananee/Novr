@@ -1,1 +1,1 @@
-"""Test package for agentic RAG system."""
+"""Test package for Novel RAG system."""

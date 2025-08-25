@@ -5,12 +5,25 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 
-from graphiti_core import Graphiti
-from graphiti_core.utils.maintenance.graph_data_operations import clear_data
-from graphiti_core.llm_client.config import LLMConfig
-from graphiti_core.llm_client.openai_client import OpenAIClient
-from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
-from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerClient
+# Optional dependency: graphiti_core. Provide fallback mocks for tests.
+try:
+    from graphiti_core import Graphiti
+    from graphiti_core.utils.maintenance.graph_data_operations import clear_data
+    from graphiti_core.llm_client.config import LLMConfig
+    from graphiti_core.llm_client.openai_client import OpenAIClient
+    from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
+    from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerClient
+    GRAPHITI_AVAILABLE = True
+except ImportError:
+    Graphiti = None  # type: ignore
+    LLMConfig = object  # type: ignore
+    OpenAIClient = object  # type: ignore
+    OpenAIEmbedder = object  # type: ignore
+    OpenAIEmbedderConfig = object  # type: ignore
+    OpenAIRerankerClient = object  # type: ignore
+    def clear_data(*args, **kwargs):
+        return None
+    GRAPHITI_AVAILABLE = False
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -41,7 +54,7 @@ class GraphitiClient:
         self.neo4j_user = neo4j_user or os.getenv("NEO4J_USER", "neo4j")
         self.neo4j_password = neo4j_password or os.getenv("NEO4J_PASSWORD")
         
-        if not self.neo4j_password:
+        if not self.neo4j_password and GRAPHITI_AVAILABLE:
             raise ValueError("NEO4J_PASSWORD environment variable not set")
         
         # LLM configuration

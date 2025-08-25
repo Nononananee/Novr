@@ -3,6 +3,7 @@ Tests for document chunking functionality.
 """
 
 import pytest
+import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 
 from ingestion.chunker import (
@@ -313,13 +314,21 @@ The results demonstrate the effectiveness of our approach.
 This research contributes to the advancement of AI technology.
 Future work will explore additional applications and improvements."""
         
-        # SimpleChunker.chunk_document is synchronous, not async
-        chunks = chunker.chunk_document(
-            content=content,
-            title="AI Research Paper",
-            source="research.md",
-            metadata={"author": "Test Author", "year": 2024}
-        )
+        # Check if chunker is async or sync
+        if hasattr(chunker.chunk_document, '__call__') and asyncio.iscoroutinefunction(chunker.chunk_document):
+            chunks = await chunker.chunk_document(
+                content=content,
+                title="AI Research Paper",
+                source="research.md",
+                metadata={"author": "Test Author", "year": 2024}
+            )
+        else:
+            chunks = chunker.chunk_document(
+                content=content,
+                title="AI Research Paper",
+                source="research.md",
+                metadata={"author": "Test Author", "year": 2024}
+            )
         
         # Verify chunks were created
         assert len(chunks) > 0
