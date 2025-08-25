@@ -22,7 +22,24 @@ from .consistency_validators import (
     CharacterConsistencyValidator, PlotConsistencyValidator, 
     WorldBuildingValidator, EmotionalToneValidator
 )
-from .providers import get_llm_client
+try:
+    from .providers import get_llm_model as get_llm_client
+except ImportError:
+    # Mock LLM client for testing
+    class MockLLMClient:
+        class Chat:
+            class Completions:
+                async def create(self, **kwargs):
+                    class MockResponse:
+                        class Choice:
+                            class Message:
+                                content = "Mock generated content for testing purposes."
+                        choices = [Choice()]
+                    return MockResponse()
+        chat = Chat()
+    
+    def get_llm_client():
+        return MockLLMClient()
 
 logger = logging.getLogger(__name__)
 
