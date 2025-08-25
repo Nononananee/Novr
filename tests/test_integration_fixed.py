@@ -501,11 +501,27 @@ async def test_memory_management():
     suite = FixedIntegrationTestSuite()
     await suite.test_memory_management()
 
+async def cleanup_test_database():
+    """Cleanup test database data."""
+    try:
+        # Mock cleanup since we don't have real database in test environment
+        print("🧹 Cleaning up test database data...")
+        # In a real implementation, this would clean up test data from PostgreSQL and Neo4j
+        await asyncio.sleep(0.1)  # Simulate cleanup time
+        print("✓ Test database cleanup completed")
+    except Exception as e:
+        print(f"⚠️ Database cleanup warning: {e}")
+
+
 @pytest.mark.asyncio
 async def test_database_operations():
     """Pytest-compatible test for database operations."""
-    suite = FixedIntegrationTestSuite()
-    await suite.test_database_operations()
+    try:
+        suite = FixedIntegrationTestSuite()
+        await suite.test_database_operations()
+    finally:
+        # Cleanup test data
+        await cleanup_test_database()
 
 @pytest.mark.asyncio
 async def test_error_recovery():

@@ -106,7 +106,20 @@ class EmotionalMemorySystem:
         
         Returns:
             List of emotional states detected
+            
+        Raises:
+            ValueError: If content or characters are invalid
+            RuntimeError: If analysis fails
         """
+        if not content or not characters:
+            raise ValueError("Content and characters must not be empty")
+        
+        if not content.strip():
+            raise ValueError("Content cannot be empty or whitespace only")
+        
+        if not isinstance(characters, list) or not all(isinstance(c, str) for c in characters):
+            raise ValueError("Characters must be a list of strings")
+        
         emotional_states = []
         
         for character in characters:
@@ -131,7 +144,7 @@ class EmotionalMemorySystem:
             
             except Exception as e:
                 logger.error(f"Error analyzing emotion for {character}: {e}")
-                continue
+                raise RuntimeError(f"Failed to analyze emotions for {character}: {e}") from e
         
         return emotional_states
     

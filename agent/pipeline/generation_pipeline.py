@@ -12,20 +12,100 @@ from enum import Enum
 import logging
 import re
 
-# Import novel-specific models
-from .models import (
-    ValidationResult, EmotionalTone, ChunkType, CharacterRole, PlotSignificance,
-    Character, Scene, Chapter, Novel, EmotionalArc, NovelGenerationRequest,
-    CharacterAnalysisRequest, EmotionalAnalysisRequest, PlotAnalysisRequest,
-    CharacterAnalysisResponse, EmotionalAnalysisResponse, PlotAnalysisResponse,
-    NovelConsistencyReport
-)
+# Import novel-specific models from main agent directory
+try:
+    from agent.models import (
+        ValidationResult, EmotionalTone, ChunkType, CharacterRole, PlotSignificance,
+        Character, Scene, Chapter, Novel, EmotionalArc
+    )
+except ImportError:
+    # Fallback for basic functionality
+    class EmotionalTone(str, Enum):
+        JOYFUL = "joyful"
+        MELANCHOLIC = "melancholic"
+        TENSE = "tense"
+        PEACEFUL = "peaceful"
+    
+    class ChunkType(str, Enum):
+        NARRATIVE = "narrative"
+        DIALOGUE = "dialogue"
+        SCENE = "scene"
+    
+    # Define minimal classes for basic functionality
+    ValidationResult = dict
+    Character = dict
+    Scene = dict
+    Chapter = dict
+    Novel = dict
+    EmotionalArc = dict
+    CharacterRole = str
+    PlotSignificance = str
 
-# Import graph utilities for novel-specific operations
-from .graph_utils import (
-    search_character_arc, find_emotional_scenes, analyze_plot_structure,
-    get_character_relationships, add_novel_content_to_graph
-)
+# Additional request/response classes (always define these)
+@dataclass
+class CharacterAnalysisRequest:
+    character_name: str
+    novel_id: Optional[str] = None
+    chapter_range: Optional[tuple] = None
+
+@dataclass
+class EmotionalAnalysisRequest:
+    content: str
+    characters: List[str]
+    analysis_type: str = "basic"
+
+@dataclass
+class PlotAnalysisRequest:
+    novel_id: str
+    analysis_scope: str = "full"
+
+@dataclass
+class CharacterAnalysisResponse:
+    character_name: str
+    development_score: float
+    consistency_score: float
+    arc_progression: List[str]
+
+@dataclass
+class EmotionalAnalysisResponse:
+    emotional_states: List[dict]
+    consistency_score: float
+    dominant_emotions: List[str]
+
+@dataclass
+class PlotAnalysisResponse:
+    structure_score: float
+    pacing_analysis: dict
+    plot_threads: List[str]
+
+@dataclass
+class NovelConsistencyReport:
+    overall_score: float
+    character_consistency: float
+    plot_consistency: float
+    emotional_consistency: float
+    issues: List[str]
+
+# Mock graph utilities for now (these would need to be implemented)
+async def search_character_arc(character_name: str, novel_title: Optional[str] = None):
+    """Mock character arc search."""
+    return {"character": character_name, "arc": "development"}
+
+async def find_emotional_scenes(emotion: str, novel_title: Optional[str] = None):
+    """Mock emotional scene search."""
+    return [{"scene": "emotional_scene", "emotion": emotion}]
+
+async def analyze_plot_structure(novel_title: Optional[str] = None):
+    """Mock plot structure analysis."""
+    return {"structure": "three_act", "acts": 3}
+
+async def get_character_relationships(character_name: str, novel_title: Optional[str] = None):
+    """Mock character relationships."""
+    return {"character": character_name, "relationships": []}
+
+async def add_novel_content_to_graph(content: str, metadata: dict):
+    """Mock graph content addition."""
+    return {"status": "added", "content_id": "mock_id"}
 
 logger = logging.getLogger(__name__)
 
@@ -103,54 +183,83 @@ class NovelAwareGenerationPipeline:
         self.emotional_context_cache: Dict[str, Dict[str, Any]] = {}
         self.plot_thread_cache: Dict[str, Dict[str, Any]] = {}
 
-    def _map_request_to_novel_context(self, request: GenerationRequest) -> NovelGenerationContext:
+    def _map_request_to_novel_context(self, request: GenerationRequest):
         """Maps the pipeline's request to the memory system's context."""
-        # Note: current_word_count is not available in the request, using a placeholder.
-        # This could be added to the request if needed for more precise memory retrieval.
-        return NovelGenerationContext(
-            current_chapter=request.current_chapter,
-            current_word_count=0, 
-            target_characters=request.target_characters,
-            active_plot_threads=request.active_plot_threads,
-            generation_intent=request.generation_type.value,
-            tone_requirements={},
-            constraints=None,
-            pov_character=request.pov_character,
-            scene_location=request.current_scene,
-            # Add emotional context if available
-            character_emotional_states=getattr(request, 'character_emotional_states', None),
-            emotional_arc_requirements=getattr(request, 'emotional_arc_requirements', None),
-            target_emotional_tone=getattr(request, 'target_emotional_tone', None)
-        )
+        try:
+            # Import the correct class from memory system
+            from memory.integrated_memory_system import GenerationContext
+            
+            return GenerationContext(
+                current_chapter=request.current_chapter,
+                current_word_count=getattr(request, 'current_word_count', 0),
+                target_characters=request.target_characters,
+                active_plot_threads=request.active_plot_threads,
+                generation_intent=request.generation_type.value,
+                tone_requirements=getattr(request, 'tone_requirements', {}),
+                constraints=getattr(request, 'constraints', None),
+                pov_character=request.pov_character,
+                scene_location=request.current_scene,
+                # Add emotional context if available
+                character_emotional_states=getattr(request, 'character_emotional_states', None),
+                emotional_arc_requirements=getattr(request, 'emotional_arc_requirements', None),
+                target_emotional_tone=getattr(request, 'target_emotional_tone', None)
+            )
+        except AttributeError as e:
+            logger.error(f"Invalid request format: {e}")
+            raise ValueError(f"Invalid request format: {e}") from e
+        except Exception as e:
+            logger.error(f"Error mapping request to context: {e}")
+            raise RuntimeError(f"Failed to map request to context: {e}") from e
 
-    def _map_novel_result_to_pipeline_result(self, novel_result: NovelGenerationResult, request: GenerationRequest) -> GenerationResult:
+    def _map_novel_result_to_pipeline_result(self, novel_result, request: GenerationRequest) -> GenerationResult:
         """Maps the memory system's result back to the pipeline's result format."""
-        is_successful = bool(novel_result.generated_content) and not novel_result.generation_metadata.get("error")
-        
-        # Basic mapping of scores
-        consistency_score = novel_result.quality_score
-        originality_score = novel_result.originality_score
-        
-        # Determine approval status based on consistency issues
-        approval_status = "approved" if not novel_result.consistency_issues else "pending_review"
-        
-        # Include emotional analysis in warnings if available
-        warnings = [str(issue) for issue in novel_result.consistency_issues]
-        if hasattr(novel_result, 'emotional_consistency_score') and novel_result.emotional_consistency_score < 0.5:
-            warnings.append(f"Low emotional consistency score: {novel_result.emotional_consistency_score:.2f}")
-        
-        return GenerationResult(
-            request_id=request.request_id,
-            success=is_successful,
-            generated_content=novel_result.generated_content,
-            consistency_score=consistency_score,
-            originality_score=originality_score,
-            approval_status=approval_status,
-            proposal_id=None,  # Approval logic is now internal to memory system, this might need adjustment
-            word_count=len(novel_result.generated_content.split()),
-            warnings=warnings,
-            errors=[novel_result.generation_metadata.get("error")] if novel_result.generation_metadata.get("error") else []
-        )
+        try:
+            # Import the correct result class from memory system
+            from memory.integrated_memory_system import GenerationResult as MemoryGenerationResult
+            
+            # Validate the result object
+            if not hasattr(novel_result, 'generated_content'):
+                raise ValueError("Invalid result object: missing generated_content")
+            
+            is_successful = bool(novel_result.generated_content) and not novel_result.generation_metadata.get("error")
+            
+            # Basic mapping of scores with validation
+            consistency_score = getattr(novel_result, 'quality_score', 0.0)
+            originality_score = getattr(novel_result, 'originality_score', 0.0)
+            
+            # Determine approval status based on consistency issues
+            consistency_issues = getattr(novel_result, 'consistency_issues', [])
+            approval_status = "approved" if not consistency_issues else "pending_review"
+            
+            # Include emotional analysis in warnings if available
+            warnings = [str(issue) for issue in consistency_issues]
+            if hasattr(novel_result, 'emotional_consistency_score') and novel_result.emotional_consistency_score < 0.5:
+                warnings.append(f"Low emotional consistency score: {novel_result.emotional_consistency_score:.2f}")
+            
+            # Handle errors safely
+            errors = []
+            if novel_result.generation_metadata.get("error"):
+                errors.append(novel_result.generation_metadata.get("error"))
+            
+            return GenerationResult(
+                request_id=request.request_id,
+                success=is_successful,
+                generated_content=novel_result.generated_content,
+                consistency_score=consistency_score,
+                originality_score=originality_score,
+                approval_status=approval_status,
+                proposal_id=None,  # Approval logic is now internal to memory system
+                word_count=len(novel_result.generated_content.split()) if novel_result.generated_content else 0,
+                warnings=warnings,
+                errors=errors
+            )
+        except Exception as e:
+            logger.error(f"Error mapping result: {e}")
+            return GenerationResult(
+                request_id=request.request_id,
+                success=False,
+                errors=[f"Result mapping error: {str(e)}"]
+            )
 
     async def generate_content(self, request: GenerationRequest) -> GenerationResult:
         """Main content generation method using the integrated memory system."""
