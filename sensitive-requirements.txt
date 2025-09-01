@@ -1,0 +1,12 @@
+# Sensitive or heavy dependencies to install into the workspace virtualenv
+langchain
+sentence-transformers
+transformers
+# faiss-cpu is OK to install here (CPU build).
+# torch is large and often pulls CUDA-enabled wheels; install it manually
+# in the environment where you need it (CPU-only example below).
+# To install CPU-only torch after the venv is created, run:
+#   /workspaces/Novr/.venv/bin/python -m pip install --upgrade pip setuptools wheel
+#   /workspaces/Novr/.venv/bin/python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu torch
+
+# Add other heavy/sensitive packages here

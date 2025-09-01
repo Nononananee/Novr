@@ -1,0 +1,255 @@
+# CrewAI Task Configurations for Novel Generation System
+# This file defines task templates and execution parameters
+
+generation:
+  priority: 1
+  timeout: 300  # 5 minutes
+  retry_count: 2
+  description_template: |
+    Generate a novel chapter based on the following requirements:
+    
+    Project: {project_id}
+    Prompt: {prompt}
+    Settings: {settings}
+    
+    Requirements:
+    1. Retrieve relevant context from the project's worldbook and character information
+    2. Generate engaging, well-structured content that fits the story
+    3. Maintain consistency with established characters and world-building
+    4. Target approximately {length_words} words
+    5. Use appropriate tone: {tone}
+    6. Follow writing style: {style}
+    
+    Context Information:
+    {context}
+    
+    Output: Complete chapter content in markdown format
+  expected_output: "A complete chapter in markdown format with proper structure and engaging content"
+  success_criteria:
+    - "Content length within 20% of target word count"
+    - "Proper markdown formatting"
+    - "Character consistency maintained"
+    - "Story progression evident"
+
+structural_qa:
+  priority: 2
+  timeout: 120  # 2 minutes
+  retry_count: 1
+  parallel: true
+  description_template: |
+    Analyze the generated chapter for structural issues:
+    
+    Text to analyze: {text}
+    
+    Analysis Focus:
+    1. Plot consistency and logical flow
+    2. Pacing and rhythm
+    3. Scene structure and organization
+    4. Character motivation consistency
+    5. Narrative continuity
+    6. Conflict development
+    
+    Plot Context: {plot_context}
+    Previous Events: {previous_events}
+    
+    Provide detailed feedback with specific suggestions for improvement.
+    Output: JSON format with score (0-100), issues array, and patches array
+  expected_output: "JSON analysis with structural assessment and improvement suggestions"
+  success_criteria:
+    - "Valid JSON format returned"
+    - "Score between 0-100"
+    - "Issues include location, type, and suggestion"
+    - "Patches include location and replacement text"
+
+character_qa:
+  priority: 2
+  timeout: 120
+  retry_count: 1
+  parallel: true
+  description_template: |
+    Analyze the chapter for character consistency:
+    
+    Text to analyze: {text}
+    
+    Analysis Focus:
+    1. Character personality consistency
+    2. Dialogue authenticity and voice
+    3. Character relationship dynamics
+    4. Emotional responses appropriateness
+    5. Character development progression
+    6. Speech patterns consistency
+    
+    Character Profiles: {character_profiles}
+    Character Relationships: {character_relationships}
+    
+    Provide specific feedback for each character involved.
+    Output: JSON format with score (0-100), issues array, and patches array
+  expected_output: "JSON analysis with character consistency assessment"
+  success_criteria:
+    - "Valid JSON format returned"
+    - "Character-specific issues identified"
+    - "Dialogue consistency evaluated"
+    - "Relationship dynamics assessed"
+
+style_qa:
+  priority: 2
+  timeout: 120
+  retry_count: 1
+  parallel: true
+  description_template: |
+    Analyze the chapter for style and prose quality:
+    
+    Text to analyze: {text}
+    
+    Analysis Focus:
+    1. Writing style consistency
+    2. Tone appropriateness
+    3. Prose quality and flow
+    4. Sentence variety and rhythm
+    5. Word choice and vocabulary
+    6. Repetitive phrases identification
+    7. Show vs. tell balance
+    
+    Style Guidelines: {style_guidelines}
+    Target Audience: {target_audience}
+    Genre: {genre}
+    
+    Provide suggestions for style improvements.
+    Output: JSON format with score (0-100), issues array, and patches array
+  expected_output: "JSON analysis with style quality assessment"
+  success_criteria:
+    - "Valid JSON format returned"
+    - "Style consistency evaluated"
+    - "Tone appropriateness assessed"
+    - "Prose quality improvements suggested"
+
+technical_qa:
+  priority: 2
+  timeout: 120
+  retry_count: 1
+  parallel: true
+  description_template: |
+    Perform technical editing on the chapter:
+    
+    Text to analyze: {text}
+    
+    Analysis Focus:
+    1. Grammar and syntax errors
+    2. Spelling mistakes
+    3. Punctuation errors
+    4. Formatting consistency
+    5. Capitalization issues
+    6. Basic style problems
+    
+    Style Guide: {style_guide}
+    
+    Provide specific corrections and patches.
+    Output: JSON format with score (0-100), issues array, and patches array
+  expected_output: "JSON analysis with technical quality assessment and corrections"
+  success_criteria:
+    - "Valid JSON format returned"
+    - "Grammar errors identified"
+    - "Spelling mistakes caught"
+    - "Punctuation consistency checked"
+
+revision:
+  priority: 3
+  timeout: 300
+  retry_count: 1
+  description_template: |
+    Revise the chapter based on QA feedback:
+    
+    Original Content: {original_content}
+    
+    QA Feedback Summary:
+    Overall Score: {overall_score}
+    Total Issues: {total_issues}
+    
+    Specific Issues to Address:
+    {qa_feedback}
+    
+    Requirements:
+    1. Address all high-priority issues identified by QA agents
+    2. Maintain the original story intent and structure
+    3. Improve overall quality while preserving the author's voice
+    4. Ensure all revisions are consistent with the established world and characters
+    5. Target improvement of at least 10 points in overall score
+    
+    Context: {context}
+    
+    Output: Revised chapter content in markdown format
+  expected_output: "Improved chapter content addressing QA feedback"
+  success_criteria:
+    - "High-severity issues resolved"
+    - "Overall quality score improved"
+    - "Original story intent preserved"
+    - "Character consistency maintained"
+
+aggregation:
+  priority: 4
+  timeout: 60
+  retry_count: 1
+  description_template: |
+    Aggregate and analyze QA results from multiple agents:
+    
+    QA Results: {qa_results}
+    
+    Tasks:
+    1. Validate each QA result format
+    2. Calculate weighted overall score
+    3. Identify common issues across agents
+    4. Prioritize issues by severity and frequency
+    5. Generate actionable recommendations
+    6. Determine if revision is required
+    
+    Output: Comprehensive QA assessment with recommendations
+  expected_output: "Aggregated QA analysis with overall score and recommendations"
+  success_criteria:
+    - "Overall score calculated correctly"
+    - "Issues prioritized by severity"
+    - "Clear revision recommendations provided"
+    - "Agent-specific feedback summarized"
+
+# Task execution settings
+execution_settings:
+  parallel_qa_enabled: true
+  max_parallel_tasks: 4
+  task_timeout_buffer: 30  # Extra seconds added to task timeouts
+  retry_delay_seconds: 5
+  error_recovery_enabled: true
+  
+# Task dependencies
+dependencies:
+  structural_qa:
+    depends_on: ["generation"]
+    wait_for_completion: true
+  character_qa:
+    depends_on: ["generation"]
+    wait_for_completion: true
+  style_qa:
+    depends_on: ["generation"]
+    wait_for_completion: true
+  technical_qa:
+    depends_on: ["generation"]
+    wait_for_completion: true
+  aggregation:
+    depends_on: ["structural_qa", "character_qa", "style_qa", "technical_qa"]
+    wait_for_completion: true
+  revision:
+    depends_on: ["aggregation"]
+    conditional: "requires_revision == true"
+
+# Performance targets
+performance_targets:
+  generation_time_max: 300  # seconds
+  qa_pipeline_time_max: 180  # seconds for all QA tasks
+  total_workflow_time_max: 600  # seconds
+  parallel_qa_speedup_min: 2.5  # minimum speedup vs sequential
+  
+# Quality gates
+quality_gates:
+  minimum_word_count: 500
+  maximum_word_count: 3000
+  minimum_overall_qa_score: 70
+  maximum_high_severity_issues: 0
+  maximum_revision_rounds: 2

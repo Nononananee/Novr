@@ -1,3 +1,0 @@
-"""
-Narrative structure management components.
-"""

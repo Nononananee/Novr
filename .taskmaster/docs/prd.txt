@@ -1,0 +1,46 @@
+# Novel AI System - Phase 1 Configuration Fix PRD
+
+## Project Overview
+Fix configuration inconsistencies in the Novel AI System to ensure Phase 1 is fully functional and ready for testing.
+
+## Current State Analysis
+- Phase 1 structure is complete (all files exist)
+- Phase 2 features have been partially implemented
+- Configuration inconsistencies exist between .env.example and config.py
+- Dependencies may be outdated
+
+## Core Issues to Address
+
+### 1. Configuration Inconsistencies
+- Missing API keys in config.py: OPENROUTER_API_KEY, GEMINI_API_KEY, QDRANT_KEY
+- Missing model configurations: OPENROUTER_MODEL, GEMINI_MODEL
+- Neo4j auth format mismatch
+- Missing MONGODB_DATABASE configuration
+
+### 2. Dependencies Update
+- Update CrewAI to latest version
+- Update LangChain to compatible version
+- Update OpenAI client to latest version
+- Ensure all dependencies are compatible
+
+### 3. Integration Testing
+- Verify all services can connect properly
+- Test the complete Phase 1 workflow
+- Ensure job queue and worker functionality
+- Validate embedding and retrieval pipeline
+
+## Success Criteria
+1. All environment variables properly loaded in config.py
+2. No configuration mismatches between .env.example and config.py
+3. All Phase 1 components can start without errors
+4. Basic end-to-end test passes (generate chapter workflow)
+5. All services (MongoDB, Redis, Qdrant) connect successfully
+
+## Technical Requirements
+- Maintain backward compatibility with existing code
+- Follow the original Phase 1 architecture from plan.md
+- Ensure proper error handling and logging
+- Use latest stable versions of dependencies
+
+## Priority
+High - This is blocking Phase 1 completion and testing

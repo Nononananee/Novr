@@ -1,0 +1,75 @@
+{
+  "version": "1.0.0",
+  "tags": {
+    "master": {
+      "name": "master",
+      "description": "Main development branch",
+      "created_at": "2025-01-27T10:00:00Z",
+      "tasks": {
+        "1": {
+          "id": "1",
+          "title": "Fix Configuration Inconsistencies",
+          "description": "Update backend/app/config.py to include all missing environment variables from .env.example",
+          "status": "pending",
+          "priority": "high",
+          "details": "Add missing API keys (OPENROUTER_API_KEY, GEMINI_API_KEY, QDRANT_KEY), model configurations (OPENROUTER_MODEL, GEMINI_MODEL), fix Neo4j auth format, and add MONGODB_DATABASE setting.",
+          "created_at": "2025-01-27T10:00:00Z",
+          "updated_at": "2025-01-27T10:00:00Z"
+        },
+        "2": {
+          "id": "2",
+          "title": "Update Dependencies to Latest Versions",
+          "description": "Update requirements.txt with latest compatible versions of key dependencies",
+          "status": "pending",
+          "priority": "high",
+          "details": "Update CrewAI, LangChain, OpenAI client, and other dependencies to latest stable versions while ensuring compatibility.",
+          "created_at": "2025-01-27T10:00:00Z",
+          "updated_at": "2025-01-27T10:00:00Z"
+        },
+        "3": {
+          "id": "3",
+          "title": "Verify Phase 1 Core Functionality",
+          "description": "Test all Phase 1 components to ensure they work correctly with updated configurations",
+          "status": "pending",
+          "priority": "medium",
+          "details": "Test database connections, job queue, worker processes, embedding pipeline, and basic API endpoints.",
+          "created_at": "2025-01-27T10:00:00Z",
+          "updated_at": "2025-01-27T10:00:00Z"
+        },
+        "4": {
+          "id": "4",
+          "title": "Create End-to-End Integration Test",
+          "description": "Develop comprehensive test for the complete chapter generation workflow",
+          "status": "pending",
+          "priority": "medium",
+          "details": "Create test that covers: API request → job queue → worker → agent generation → QA → persistence → response.",
+          "created_at": "2025-01-27T10:00:00Z",
+          "updated_at": "2025-01-27T10:00:00Z"
+        },
+        "5": {
+          "id": "5",
+          "title": "Documentation and Deployment Readiness",
+          "description": "Update documentation and ensure deployment configuration is correct",
+          "status": "pending",
+          "priority": "low",
+          "details": "Update README, verify docker-compose.yml, ensure all environment variables are documented.",
+          "created_at": "2025-01-27T10:00:00Z",
+          "updated_at": "2025-01-27T10:00:00Z"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "created_at": "2025-01-27T10:00:00Z",
+    "updated_at": "2025-01-27T10:00:00Z",
+    "current_tag": "master"
+  },
+  "phase1-fix": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-09-01T12:56:48.151Z",
+      "updated": "2025-09-01T12:56:48.151Z",
+      "description": "Perbaikan implementasi Phase 1 yang solid"
+    }
+  }
+}

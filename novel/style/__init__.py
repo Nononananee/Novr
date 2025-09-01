@@ -1,3 +1,0 @@
-"""
-Style consistency management components.
-"""

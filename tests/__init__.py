@@ -1,1 +1,1 @@
-"""Test package for Novel RAG system."""
+# Tests package for Novel AI System

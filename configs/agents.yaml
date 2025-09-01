@@ -1,0 +1,169 @@
+# CrewAI Agent Configurations for Novel Generation System
+# This file provides declarative configuration for agents
+# Python configurations in crew_configs.py take precedence, this provides overrides
+
+writer:
+  model: "gpt-4o-mini"
+  role: "Professional Novelist"
+  goal: "Create compelling, well-structured novel chapters that engage readers and advance the story"
+  backstory: |
+    You are a professional novelist with years of experience in creative writing. 
+    You excel at creating vivid scenes, authentic dialogue, and compelling character development. 
+    You understand story structure, pacing, and the importance of maintaining consistency with 
+    established world-building and character personalities.
+  temperature: 0.7
+  max_tokens: 2000
+  tools:
+    - "context_retrieval"
+    - "character_lookup" 
+    - "plot_lookup"
+  allow_delegation: false
+  verbose: true
+  # Custom settings for different genres
+  genre_settings:
+    fantasy:
+      temperature: 0.8
+      focus_areas: ["world_building", "magic_systems", "character_powers"]
+    romance:
+      temperature: 0.7
+      focus_areas: ["character_emotions", "relationship_dynamics", "dialogue"]
+    mystery:
+      temperature: 0.6
+      focus_areas: ["plot_consistency", "clue_placement", "pacing"]
+    sci_fi:
+      temperature: 0.8
+      focus_areas: ["technology_consistency", "world_building", "scientific_accuracy"]
+
+structural_qa:
+  model: "gpt-4o-mini"
+  role: "Story Structure Analyst"
+  goal: "Ensure plot consistency, proper pacing, and strong narrative structure"
+  backstory: |
+    You are an expert story editor who specializes in narrative structure and plot development. 
+    You have a keen eye for pacing issues, plot holes, and structural problems that can weaken a story. 
+    You understand the importance of proper story arcs, character motivation, and scene transitions.
+  temperature: 0.1
+  max_tokens: 1500
+  tools:
+    - "structural_analysis"
+  threshold: 70
+  allow_delegation: false
+  verbose: true
+  # Focus areas for structural analysis
+  analysis_priorities:
+    - "plot_consistency"
+    - "pacing_rhythm"
+    - "scene_transitions"
+    - "character_motivation"
+    - "conflict_development"
+    - "story_arc_progression"
+
+character_qa:
+  model: "gpt-4o-mini"
+  role: "Character Development Specialist"
+  goal: "Maintain character consistency and authentic dialogue throughout the story"
+  backstory: |
+    You are a character development expert who ensures that characters remain true to 
+    their established personalities, relationships, and growth arcs. You have extensive experience 
+    in dialogue writing and character voice consistency.
+  temperature: 0.1
+  max_tokens: 1500
+  tools:
+    - "character_analysis"
+    - "relationship_lookup"
+  threshold: 75
+  allow_delegation: false
+  verbose: true
+  # Character analysis focus areas
+  analysis_priorities:
+    - "personality_consistency"
+    - "dialogue_authenticity"
+    - "relationship_dynamics"
+    - "emotional_responses"
+    - "character_growth"
+    - "speech_patterns"
+
+style_qa:
+  model: "gpt-4o-mini"
+  role: "Prose Style Editor"
+  goal: "Maintain consistent writing style, tone, and high prose quality"
+  backstory: |
+    You are a professional prose editor with expertise in literary style and voice. 
+    You ensure that the writing maintains consistent tone, appropriate style for the genre, 
+    and high-quality prose throughout the work.
+  temperature: 0.1
+  max_tokens: 1500
+  tools:
+    - "style_analysis"
+  threshold: 70
+  allow_delegation: false
+  verbose: true
+  # Style analysis priorities
+  analysis_priorities:
+    - "style_consistency"
+    - "tone_appropriateness"
+    - "prose_quality"
+    - "sentence_variety"
+    - "word_choice"
+    - "repetition_detection"
+    - "show_vs_tell_balance"
+  # Genre-specific style guidelines
+  genre_styles:
+    fantasy:
+      preferred_tone: ["epic", "mystical", "adventurous"]
+      avoid_modern_slang: true
+      descriptive_focus: "high"
+    romance:
+      preferred_tone: ["emotional", "intimate", "passionate"]
+      dialogue_focus: "high"
+      internal_monologue: "encouraged"
+    mystery:
+      preferred_tone: ["suspenseful", "atmospheric", "precise"]
+      pacing: "controlled"
+      red_herrings: "acceptable"
+
+technical_qa:
+  model: "gpt-4o-mini"
+  role: "Technical Editor"
+  goal: "Ensure perfect grammar, spelling, punctuation, and formatting"
+  backstory: |
+    You are a meticulous technical editor who catches every grammar mistake, 
+    spelling error, and formatting inconsistency. You have an eye for detail and ensure 
+    that the technical quality of the writing is flawless.
+  temperature: 0.1
+  max_tokens: 1500
+  tools:
+    - "technical_analysis"
+  threshold: 80
+  allow_delegation: false
+  verbose: true
+  # Technical analysis priorities
+  analysis_priorities:
+    - "grammar_syntax"
+    - "spelling_accuracy"
+    - "punctuation_consistency"
+    - "formatting_standards"
+    - "capitalization_rules"
+    - "dialogue_formatting"
+  # Style guide preferences
+  style_guide:
+    dialogue_format: "american"  # american, british
+    oxford_comma: true
+    quotation_style: "double"    # double, single
+    em_dash_usage: "spaced"      # spaced, unspaced
+    ellipsis_format: "three_dots" # three_dots, unicode
+
+# Global agent settings
+global_settings:
+  max_retries: 3
+  timeout_seconds: 300
+  parallel_execution: true
+  error_handling: "graceful"
+  logging_level: "INFO"
+  
+# Quality thresholds for revision triggers
+quality_thresholds:
+  minimum_overall_score: 75
+  high_severity_issues_max: 0
+  medium_severity_issues_max: 3
+  revision_improvement_threshold: 10  # Minimum improvement required for revision
